@@ -250,7 +250,7 @@ The assignments below reflect the team's proposed split and should be confirmed 
 
 | Owner / role | Responsibilities | Deliverables |
 |---|---|---|
-| Devid — Full-stack / integration | Frontend dashboard, backend APIs, integration, end-to-end testing | Running application, API integration, dashboard, demo deployment |
+|   — Full-stack / integration | Frontend dashboard, backend APIs, integration, end-to-end testing | Running application, API integration, dashboard, demo deployment |
 | Arshad — AI and root-cause analysis | Statistical root-cause engine, evidence-to-explanation flow, manual retrieval, vLLM/open-model setup if used | Candidate-cause ranking, cited explanation, AMD LLM service if in scope |
 | Rafal — Computer vision | Dataset/category selection, preprocessing, Anomalib/PatchCore inference, anomaly scores/localization, AMD inference evaluation, vision output contract | Reproducible vision pipeline, sample outputs, evaluation and latency report |
 | Member 4 — Sensor simulation / data | Telemetry generator, fault scenarios, time-series alignment, sensor analytics and validation | Scenario config, telemetry stream, sensor evidence output, tests |
@@ -650,7 +650,7 @@ scripts/
 └── benchmark_amd.py           # AMD ROCm benchmark (exits 0 with a skip record when ROCm is absent)
 tests/                         # 77 tests covering all of the above
 docs/
-├── RAFAL_HANDOFF.md           # integration notes for dONYA / Arshad / Devid
+├── RAFAL_HANDOFF.md           # integration notes for dONYA / Arshad /  
 ├── RAFAL_ADDENDUM.md          # the concise version of this addendum
 ├── AMD_VERIFICATION_R1.md     # honest "no AMD GPU on this host" record + reproduction steps
 └── EVALUATION_RESULTS.json    # measured CPU numbers (real, not fabricated)
@@ -678,7 +678,7 @@ LICENSE                        # MIT, Copyright (c) 2026 RafalW3bCraft
 ### Where to read more
 
 * `docs/RAFAL_HANDOFF.md` — full integration handoff for the rest of
-  the team (dONYA, Arshad, Devid).
+  the team (dONYA, Arshad,  ).
 * `docs/AMD_VERIFICATION_R1.md` — verified AMD environment record and
   exact reproduction steps for real ROCm hardware.
 * `docs/EVALUATION_RESULTS.json` — measured CPU latency and accuracy.
