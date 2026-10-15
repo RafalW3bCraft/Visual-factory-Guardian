@@ -1,0 +1,53 @@
+{
+  "browserVersion": "155.0.8059.41",
+  "browserInfo": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "hardwareConcurrency": 14,
+    "devicePixelRatio": 1,
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)"
+  },
+  "loads": [
+    {
+      "readyMs": 272.5,
+      "domContentLoadedMs": 36,
+      "firstContentfulPaintMs": 112,
+      "transferredBytes": 364515
+    },
+    {
+      "readyMs": 238.39999999850988,
+      "domContentLoadedMs": 26.200000002980232,
+      "firstContentfulPaintMs": 80,
+      "transferredBytes": 364515
+    },
+    {
+      "readyMs": 242.39999999850988,
+      "domContentLoadedMs": 26,
+      "firstContentfulPaintMs": 72,
+      "transferredBytes": 364515
+    }
+  ],
+  "frames": {
+    "sampleMs": 5016.5,
+    "frames": 301,
+    "averageRafFps": 60.00199342170836,
+    "medianFrameMs": 16.699999999999818,
+    "p95FrameMs": 16.799999999999727,
+    "over50ms": 0
+  },
+  "replayMemory": {
+    "cycles": 20,
+    "before": {
+      "Documents": 1,
+      "JSEventListeners": 226,
+      "Nodes": 483,
+      "JSHeapUsedSize": 11529496
+    },
+    "after": {
+      "Documents": 1,
+      "JSEventListeners": 226,
+      "Nodes": 483,
+      "JSHeapUsedSize": 12258748
+    }
+  },
+  "note": "Local headless browser; no network throttling. RAF cadence while animated scene is active, not AMD inference or a cross-device guarantee. Heap measured after explicit garbage collection; short-run check only."
+}
