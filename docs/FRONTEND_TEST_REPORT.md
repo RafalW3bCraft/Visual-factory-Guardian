@@ -40,4 +40,6 @@ Budget: combined gzip JavaScript under 400 KB; bounded DPR at 1.5 and shadow map
 Real backend, model, dataset, retrieval, manual citations and AMD execution remain unavailable. Live tests use explicitly mocked HTTP responses. Guided images, scores and telemetry are authored synthetic fixtures. Live localization/image rendering is not implemented. No first-visit offline installer/service worker exists; loaded guided mode works without the network.
 
 ## Delivery
-Feature branch: `feat/interactive-3d-factory-experience`. GitHub and deployment results are recorded in the PR and final delivery message after publication. No main-branch merge is authorized or performed.
+Feature branch: `feat/interactive-3d-factory-experience`. Implementation commit: `3d0972ad460f06549b09e7da7c568cf42d25df7f`, pushed successfully. [PR #1](https://github.com/RafalW3bCraft/Visual-factory-Guardian/pull/1) is open. A subsequent documentation commit records the publication result. No main-branch merge was performed.
+
+Vercel project creation succeeded, but deployment failed with a 403 team-scope authorization error; the same-project CLI fallback had no credentials. No public deployment URL exists. See DEPLOYMENT.md for the exact project/scope and recovery step.
