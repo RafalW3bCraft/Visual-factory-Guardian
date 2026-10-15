@@ -1,0 +1,67 @@
+{
+  "scenario_id": "thermal-drift-001",
+  "line_id": "line-01",
+  "epoch": "2026-10-15T10:00:00Z",
+  "duration_seconds": 56,
+  "fault_start_seconds": 18,
+  "anomaly_at_seconds": 32,
+  "random_seed": 20261015,
+  "sampling_interval_seconds": 1,
+  "sensors": [
+    {
+      "sensor_id": "temperature-01",
+      "metric": "temperature",
+      "unit": "degC",
+      "baseline": 64.0,
+      "threshold": 75.0,
+      "drift_amplitude": 24.0,
+      "noise_amplitude": 0.35,
+      "noise_frequency": 0.9,
+      "fault_state": "temperature_drift"
+    },
+    {
+      "sensor_id": "vibration-01",
+      "metric": "vibration",
+      "unit": "mm/s",
+      "baseline": 2.1,
+      "threshold": 4.0,
+      "drift_amplitude": 0.8,
+      "noise_amplitude": 0.12,
+      "noise_frequency": 1.7,
+      "fault_state": "vibration_drift"
+    },
+    {
+      "sensor_id": "current-01",
+      "metric": "current",
+      "unit": "A",
+      "baseline": 42.0,
+      "threshold": 55.0,
+      "drift_amplitude": 7.0,
+      "noise_amplitude": 0.5,
+      "noise_frequency": 0.6,
+      "fault_state": "motor_overload"
+    }
+  ],
+  "inspections": [
+    { "event_id": "evt-001", "product_id": "P-001", "at_seconds": 8,  "image_id": "img-001", "expected_label": "normal",    "expected_anomaly_score_range": [0.0, 0.5] },
+    { "event_id": "evt-002", "product_id": "P-002", "at_seconds": 16, "image_id": "img-002", "expected_label": "normal",    "expected_anomaly_score_range": [0.0, 0.5] },
+    { "event_id": "evt-003", "product_id": "P-003", "at_seconds": 24, "image_id": "img-003", "expected_label": "normal",    "expected_anomaly_score_range": [0.0, 0.5] },
+    { "event_id": "evt-004", "product_id": "P-004", "at_seconds": 32, "image_id": "img-004", "expected_label": "anomalous", "expected_anomaly_score_range": [0.5, 1.0] },
+    { "event_id": "evt-005", "product_id": "P-005", "at_seconds": 40, "image_id": "img-005", "expected_label": "anomalous", "expected_anomaly_score_range": [0.5, 1.0] },
+    { "event_id": "evt-006", "product_id": "P-006", "at_seconds": 48, "image_id": "img-006", "expected_label": "anomalous", "expected_anomaly_score_range": [0.5, 1.0] }
+  ],
+  "evidence_window_seconds": 18,
+  "post_window_seconds": 8,
+  "anomaly_threshold": 0.65,
+  "dataset": {
+    "name": "synthetic_thermal_fixture",
+    "source": "simulated",
+    "note": "Synthetic grayscale fixtures generated deterministically from the scenario seed; not real MVTec images. Use real MVTec AD inference when the optional torch/anomalib backend is wired up."
+  },
+  "vision_model": {
+    "id": "patchcore-lite-cpu",
+    "backend": "sklearn-nearest-neighbour",
+    "input_size": [128, 128],
+    "note": "CPU-only PatchCore-lite (KNN over patch embeddings). Replace with Anomalib/PatchCore when an AMD ROCm environment is available."
+  }
+}
