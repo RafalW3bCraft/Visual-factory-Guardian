@@ -468,3 +468,218 @@ Example scores are illustrative and must not be presented as measured results or
 ---
 
 **Status note:** The frontend section documents implemented behavior. The remaining architecture, Python stack, model, dataset and AMD work above describes the retained team proposal; it is not evidence that those services exist.
+## Branch addendum — `feat/cv-telemetry-rafal`
+
+> This section is a strictly additive companion to the README above.
+> It documents the computer-vision, telemetry, evidence, and AMD
+> autodetect modules that ship on the `feat/cv-telemetry-rafal`
+> branch. The README above is unchanged.
+
+### What this branch adds
+
+* A deterministic **telemetry simulator** that replays the
+  `thermal-drift-001` scenario bit-identically on every run
+  (temperature / vibration / motor current, three sensors, 171 records
+  over 56 seconds, fault injected at second 18).
+* A **vision pipeline** with three interchangeable backends behind one
+  `VisionBackend` interface: a CPU `PatchCoreLiteCPU` (sklearn KNN over
+  patch embeddings), a deterministic `SyntheticFixtureBackend`, and an
+  `AnomalibPatchCore` that activates automatically when torch ROCm +
+  Anomalib are installed.
+* An **AMD ROCm autodetect module** that probes `lspci`, `/dev/dri`,
+  `/opt/rocm`, `rocm-smi`, and the torch HIP bindings — and picks the
+  best backend this host can actually run. The chain is
+  `anomalib → patchcore-lite → synthetic`.
+* An **MVTec AD downloader** that enforces the MVTec non-commercial
+  research licence (`--accept-license` is mandatory), verifies the
+  archive, and supports a single-category mode that keeps only the
+  requested category.
+* A **FastAPI** surface (`/api/v1/{health, scenarios/start, scenarios/stop,
+  events, sensors, analysis/{event_id}}`) with Pydantic schemas that
+  mirror the frontend's Zod validators 1:1.
+* An **event-alignment** layer and a **sensor evidence builder** that
+  compute rolling baselines, threshold breaches, drift lead/lag, and a
+  deterministic evidence-grounded explanation.
+* **77 tests** (unit + integration + live-uvicorn smoke) that pass in
+  ~4 seconds on CPU.
+
+### Setup (CPU — works everywhere)
+
+Tested on Python 3.13, Debian, no AMD GPU required.
+
+```bash
+# 1. Clone and check out the branch
+git clone https://github.com/RafalW3bCraft/Visual-factory-Guardian.git
+cd Visual-factory-Guardian
+git checkout feat/cv-telemetry-rafal
+
+# 2. Create a virtualenv and install the CPU dependencies
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
+
+# 3. Generate the synthetic fixture images so the API can run PatchCore-lite
+python -m backend.vision.fixtures --scenario thermal-drift-001
+#   -> writes 24 normal_*.png + img-001..img-006.png under data/fixtures/thermal-drift-001/
+```
+
+### Setup (AMD ROCm — when real hardware is available)
+
+```bash
+# 1. Install the ROCm stack per https://rocm.docs.amd.com/
+#    Note the ROCm version (e.g. 6.1).
+
+# 2. Install the ROCm-matched torch wheel
+pip install --index-url https://download.pytorch.org/whl/rocm torch
+
+# 3. Install Anomalib and verify it matches the chosen torch version
+pip install anomalib
+
+# 4. Download MVTec AD (licence acceptance is mandatory)
+python -m backend.vision.mvtec_download --print-license            # read first
+python -m backend.vision.mvtec_download --accept-license \
+    --root data/mvtec_ad --category bottle
+
+# 5. Point the API at the dataset and start it
+export VFG_MVTEC_ROOT=$PWD/data/mvtec_ad
+export VFG_MVTEC_CATEGORY=bottle
+PYTHONPATH=. python -m backend.api.server --port 8000
+# The autodetect will pick AnomalibPatchCore automatically.
+
+# 6. Run the AMD benchmark — exits 0 with a JSON record on stdout
+PYTHONPATH=. python scripts/benchmark_amd.py \
+    --mvtec-root data/mvtec_ad --category bottle --runs 50
+```
+
+The benchmark JSON can be pasted straight into `docs/AMD_SETUP.md` (the
+template there has rows for GPU, ROCm, PyTorch, Anomalib, model,
+input size, batch size, warm-up, runs, p50/p95, throughput, and known
+issues).
+
+### Usage — run the demo (no network required)
+
+```bash
+PYTHONPATH=. python scripts/run_demo.py --backend auto
+# Auto picks: Anomalib → PatchCore-lite → synthetic, based on the host.
+```
+
+The script walks through every documented endpoint and prints the
+exact JSON the frontend receives.
+
+### Usage — run the live API server
+
+```bash
+# Default autodetect
+PYTHONPATH=. python -m backend.api.server --port 8000
+
+# Force a specific backend
+VFG_VISION_BACKEND=synthetic     PYTHONPATH=. python -m backend.api.server
+VFG_VISION_BACKEND=patchcore-lite PYTHONPATH=. python -m backend.api.server
+VFG_VISION_BACKEND=anomalib      PYTHONPATH=. python -m backend.api.server
+```
+
+Test it:
+
+```bash
+curl -s http://localhost:8000/api/v1/health | python -m json.tool
+curl -s -X POST http://localhost:8000/api/v1/scenarios/start \
+     -H 'Content-Type: application/json' \
+     -d '{"scenario_id":"thermal-drift-001"}' | python -m json.tool
+curl -s "http://localhost:8000/api/v1/events?scenario_id=thermal-drift-001" \
+     | python -m json.tool
+```
+
+### Usage — run the tests
+
+```bash
+PYTHONPATH=. pytest -ra tests/                # full suite (77 tests, ~4 s)
+PYTHONPATH=. pytest tests/unit/               # unit only
+PYTHONPATH=. pytest tests/integration/        # integration + live uvicorn smoke
+PYTHONPATH=. pytest -k amd                    # only the AMD autodetect tests
+PYTHONPATH=. pytest -k mvtec                  # only the MVTec loader tests
+```
+
+### Environment variables
+
+| Variable                | Default                | Purpose |
+|-------------------------|------------------------|---------|
+| `VFG_VISION_BACKEND`    | `auto`                 | `auto` / `anomalib` / `patchcore-lite` / `synthetic` |
+| `VFG_SCENARIO`          | `thermal-drift-001`    | Scenario id (resolves under `configs/scenarios/`) |
+| `VFG_FIXTURE_ROOT`      | `data/fixtures`        | PatchCore-lite training-set root |
+| `VFG_MVTEC_ROOT`        | *(unset)*              | MVTec AD root for the Anomalib backend |
+| `VFG_MVTEC_CATEGORY`    | *(unset)*              | MVTec category name (`bottle`, `cable`, …) |
+| `VFG_HEATMAP_DIR`       | `data/heatmaps`        | Where the Anomalib backend writes anomaly maps |
+
+### Backend selection rules
+
+| `VFG_VISION_BACKEND` | Behaviour |
+|---|---|
+| `auto` *(default)* | ROCm → CPU PatchCore-lite → synthetic |
+| `anomalib`         | Anomalib PatchCore (requires torch ROCm + anomalib + MVTec) |
+| `patchcore-lite`   | CPU PatchCore-lite (requires `VFG_FIXTURE_ROOT`) |
+| `synthetic`        | Deterministic fixture (no images required) |
+
+The autodetect chain (the `auto` row) is fully deterministic:
+
+| `has_torch_rocm` | `has_amd_hardware` or `has_rocm_runtime` | Selected backend |
+|---|---|---|
+| True  | *    | `anomalib` |
+| False | True | `patchcore-lite` |
+| False | False| `synthetic` |
+
+### File layout — what's new on this branch
+
+```text
+backend/
+├── api/                       # FastAPI app, Pydantic schemas, payload builders, uvicorn launcher
+├── vision/
+│   ├── amd_detect.py          # pure-stdlib ROCm / AMD / torch environment probe
+│   ├── anomalib_backend.py    # Anomalib PatchCore with conditional torch/anomalib imports
+│   ├── mvtec_download.py      # MVTec AD downloader with licence acceptance gate
+│   ├── mvtec_loader.py        # typed walker for the official MVTec AD layout
+│   ├── inference.py           # VisionBackend ABC + PatchCoreLiteCPU + SyntheticFixtureBackend + build_backend
+│   └── fixtures.py            # synthetic fixture image generator
+├── telemetry/simulator.py     # deterministic simulator matching the frontend's equations
+├── scenario/loader.py         # typed scenario loader (configs/scenarios/*.json)
+├── event_alignment/aligner.py # image↔sensor time alignment by scenario_id/line_id/event_id
+└── sensor_evidence/builder.py # rolling baselines, threshold events, drift lead/lag
+configs/scenarios/thermal-drift-001.json
+scripts/
+├── run_demo.py                # end-to-end in-process demo (no network)
+└── benchmark_amd.py           # AMD ROCm benchmark (exits 0 with a skip record when ROCm is absent)
+tests/                         # 77 tests covering all of the above
+docs/
+├── RAFAL_HANDOFF.md           # integration notes for dONYA / Arshad / Devid
+├── RAFAL_ADDENDUM.md          # the concise version of this addendum
+├── AMD_VERIFICATION_R1.md     # honest "no AMD GPU on this host" record + reproduction steps
+└── EVALUATION_RESULTS.json    # measured CPU numbers (real, not fabricated)
+LICENSE                        # MIT, Copyright (c) 2026 RafalW3bCraft
+```
+
+### Integration notes
+
+* **Frontend adapter:** the response shapes match `frontend/src/services/api.ts`
+  byte-for-byte; `VITE_API_BASE_URL=https://<host>` is all that's needed.
+* **Root-cause / LLM:** consume `GET /api/v1/analysis/{event_id}` for the
+  full `Analysis` payload (sensor evidence + candidate causes +
+  explanation + recommended action). Add a new `llm_explanation`
+  field if you want to replace the deterministic explanation; do not
+  edit the existing `explanation` in place.
+* **AMD validation:** when real hardware is available, run
+  `scripts/benchmark_amd.py` and paste the JSON output into the
+  template at `docs/AMD_SETUP.md`. Do not copy results from another
+  machine.
+* **Licence:** the repository ships under MIT (see `LICENSE`).
+  MVTec AD remains under its own non-commercial research licence —
+  the downloader enforces this and refuses to fetch without
+  `--accept-license`.
+
+### Where to read more
+
+* `docs/RAFAL_HANDOFF.md` — full integration handoff for the rest of
+  the team (dONYA, Arshad, Devid).
+* `docs/AMD_VERIFICATION_R1.md` — verified AMD environment record and
+  exact reproduction steps for real ROCm hardware.
+* `docs/EVALUATION_RESULTS.json` — measured CPU latency and accuracy.
+* `docs/RAFAL_ADDENDUM.md` — the condensed form of this section.

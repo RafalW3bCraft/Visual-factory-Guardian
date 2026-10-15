@@ -24,7 +24,9 @@ def vfg_venv() -> Path:
 
 @pytest.fixture(scope="session", autouse=True)
 def patch_environ():
-    # Make sure test runs pick up the synthetic fixture backend by default.
+    # Tests run against the synthetic backend by default so they don't
+    # need fixture images, MVTec, or a GPU. Override with env vars or
+    # monkeypatch.setenv() per test.
     os.environ.setdefault("VFG_VISION_BACKEND", "synthetic")
     os.environ.setdefault("VFG_SCENARIO", "thermal-drift-001")
     os.environ.setdefault("VFG_FIXTURE_ROOT", str(REPO_ROOT / "data" / "fixtures"))

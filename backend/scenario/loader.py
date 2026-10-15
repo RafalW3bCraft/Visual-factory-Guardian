@@ -45,6 +45,7 @@ class VisionModelConfig:
     backend: str
     input_size: tuple[int, int]
     note: str = ""
+    mvtec_category: str | None = None  # populated when dataset.source == "public_dataset"
 
 
 @dataclass(frozen=True)
@@ -158,6 +159,7 @@ def load_scenario(path: str | Path) -> Scenario:
             backend=raw["vision_model"]["backend"],
             input_size=tuple(raw["vision_model"]["input_size"]),
             note=raw["vision_model"].get("note", ""),
+            mvtec_category=raw["vision_model"].get("mvtec_category"),
         ),
         source_path=p,
     )

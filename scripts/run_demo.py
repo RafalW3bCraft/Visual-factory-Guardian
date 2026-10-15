@@ -28,8 +28,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--backend",
-        default=os.environ.get("VFG_VISION_BACKEND", "synthetic"),
-        choices=["synthetic", "patchcore-lite"],
+        default=os.environ.get("VFG_VISION_BACKEND", "auto"),
+        choices=["auto", "synthetic", "patchcore-lite", "anomalib"],
     )
     parser.add_argument("--fixture-root", default="data/fixtures")
     args = parser.parse_args()
