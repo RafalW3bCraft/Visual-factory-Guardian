@@ -1,3 +1,40 @@
+# Build & test artifacts
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.DS_Store
+*.tsbuildinfo
+.vscode/
+.idea/
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+
+# Tooling reports
+frontend/test-results/
+frontend/playwright-report/
+
+# ML / datasets — never committed
+datasets/
+*.pth
+*.pt
+*.onnx
+*.h5
+*.npz
+models/cache/
+
 node_modules/
 dist/
 .env

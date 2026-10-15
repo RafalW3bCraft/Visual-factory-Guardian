@@ -1,0 +1,52 @@
+{
+  "environment": {
+    "python": "3.13.5",
+    "platform": "linux x86_64",
+    "hardware": "CPU only — no AMD GPU detected (lspci reports Red Hat Virtio 1.0 GPU, which is virtualized). AMD ROCm benchmark is NOT run because real AMD hardware is not accessible from this environment.",
+    "torch": "not installed",
+    "anomalib": "not installed",
+    "fastapi": "0.143.1",
+    "opencv": "5.0.0",
+    "scikit-learn": "1.9.1",
+    "numpy": "2.5.4"
+  },
+  "vision_backends": {
+    "patchcore-lite-cpu": {
+      "model_id": "patchcore-lite-cpu",
+      "input_size": [128, 128],
+      "training_set_size": 24,
+      "test_set_size": 6,
+      "test_set_label_accuracy": "6/6 (100%)",
+      "latency": {
+        "endpoint": "GET /api/v1/events",
+        "n": 20,
+        "warmup": 3,
+        "p50_ms": 24.0,
+        "p95_ms": 30.5,
+        "min_ms": 21.9,
+        "max_ms": 30.5,
+        "note": "Includes 6 PatchCore-lite inference calls per request. CPU only."
+      }
+    },
+    "synthetic-fixture": {
+      "model_id": "synthetic-fixture",
+      "latency": {
+        "events_endpoint": { "n": 50, "warmup": 3, "p50_ms": 2.03, "p95_ms": 2.97 },
+        "sensors_endpoint": { "n": 50, "warmup": 3, "p50_ms": 3.64, "p95_ms": 6.16 }
+      }
+    }
+  },
+  "telemetry": {
+    "scenario": "thermal-drift-001",
+    "sensors": ["temperature-01", "vibration-01", "current-01"],
+    "duration_seconds": 56,
+    "records_emitted": 171,
+    "reproducibility": "bit-identical across two separate process invocations"
+  },
+  "notes": [
+    "Synthetic fixture images (data/fixtures/thermal-drift-001/*.png) are produced by backend.vision.fixtures and are NOT MVTec AD samples.",
+    "PatchCore-lite is a CPU stand-in (KNN over patch mean/var embeddings). The production target is Anomalib PatchCore on AMD ROCm hardware.",
+    "When a real AMD GPU + ROCm + Anomalib environment is wired up, swap VisionBackend to an Anomalib engine and rerun these benchmarks.",
+    "No AMD inference latency is reported because no AMD hardware is available from this environment."
+  ]
+}
