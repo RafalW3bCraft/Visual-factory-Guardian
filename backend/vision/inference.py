@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import abc
 import math
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -239,16 +240,78 @@ def build_backend(
     *,
     fixtures: dict[str, tuple[float, str]] | None = None,
     input_size: tuple[int, int] = (128, 128),
+    anomalib_kwargs: dict | None = None,
 ) -> VisionBackend:
-    """Factory used by the API layer."""
-    kind = kind.lower()
+    """Factory used by the API layer.
+
+    Recognised values for ``kind``:
+
+      * ``"auto"`` — autodetect chain: Anomalib ROCm → CPU PatchCore-lite
+        → synthetic fixture.
+      * ``"anomalib"`` — explicit Anomalib PatchCore (requires torch
+        ROCm + anomalib installed; raises RuntimeError otherwise).
+      * ``"patchcore-lite"`` / ``"patchcore-lite-cpu"`` — CPU PatchCore-lite.
+      * ``"synthetic"`` / ``"fixture"`` — deterministic fixture backend
+        (requires ``fixtures``).
+    """
+    kind = (kind or "auto").lower()
+    if kind == "auto":
+        from .amd_detect import summary as _amd_summary
+
+        env = _amd_summary()
+        if env.has_torch_rocm:
+            try:
+                return build_backend(
+                    "anomalib",
+                    anomalib_kwargs=anomalib_kwargs or {},
+                )
+            except RuntimeError as exc:
+                # torch+ROCm says yes but Anomalib isn't installed → fall through.
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "Auto-detect: ROCm torch detected but Anomalib backend could not load: %s. "
+                    "Falling back to patchcore-lite.",
+                    exc,
+                )
+        if env.has_amd_hardware or env.has_rocm_runtime:
+            return PatchCoreLiteCPU(input_size=input_size)
+        return build_backend("synthetic", fixtures=fixtures or _synthetic_fixtures())
+
     if kind in {"patchcore-lite", "patchcore-lite-cpu"}:
         return PatchCoreLiteCPU(input_size=input_size)
     if kind in {"synthetic", "fixture"}:
         if fixtures is None:
-            raise ValueError("Synthetic backend requires fixtures")
+            fixtures = _synthetic_fixtures()
         return SyntheticFixtureBackend(fixtures)
+    if kind in {"anomalib", "anomalib-rocm", "patchcore-rocm"}:
+        from .anomalib_backend import AnomalibPatchCore
+
+        return AnomalibPatchCore(**(anomalib_kwargs or {}))
     raise ValueError(f"Unknown vision backend: {kind}")
+
+
+def _synthetic_fixtures() -> dict[str, tuple[float, str]]:
+    """Build a synthetic fixture table for the configured scenario.
+
+    Falls back to a tiny in-memory table if the scenario cannot be
+    loaded — keeps the factory safe to call from any environment.
+    """
+    try:
+        from ..scenario.loader import load_scenario
+
+        scenario = load_scenario(os.environ.get("VFG_SCENARIO", "thermal-drift-001"))
+        return {
+            i.image_id: (
+                (i.expected_anomaly_score_range[1] - 0.02)
+                if i.expected_label == "anomalous"
+                else (i.expected_anomaly_score_range[0] + 0.05),
+                i.expected_label,
+            )
+            for i in scenario.inspections
+        }
+    except Exception:  # noqa: BLE001
+        return {"img-001": (0.1, "normal"), "img-002": (0.9, "anomalous")}
 
 
 __all__ = [

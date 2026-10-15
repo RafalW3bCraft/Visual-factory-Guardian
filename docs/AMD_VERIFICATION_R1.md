@@ -20,7 +20,24 @@ ModuleNotFoundError: No module named 'torch'
 
 The "GPU" reported by lspci is a virtualised Virtio device. There is
 no AMD GPU, no ROCm runtime, no torch build, no Anomalib installation
-on this machine.
+on this machine. The Vega iGPU on the host CPU is reachable via
+`/dev/dri/renderD128` but has no ROCm userspace.
+
+The autodetect module (`backend.vision.amd_detect.summary()`) returns:
+
+```json
+{
+  "amd_gpus": [],
+  "dri_render_nodes": ["/dev/dri/renderD128"],
+  "rocm": { "rocm_root_exists": false, "rocm_smi_on_path": false, "...": "..." },
+  "torch": { "available": false, "note": "torch not installed" },
+  "recommended_backend": "patchcore-lite"
+}
+```
+
+The `auto` backend selection (`VFG_VISION_BACKEND=auto`, the default)
+uses this summary and falls through to CPU PatchCore-lite, then to
+the synthetic fixture.
 
 ## What was measured (real numbers)
 
@@ -39,15 +56,12 @@ in `docs/RAFAL_HANDOFF.md` §7.
 
 ## What was **not** measured (and why)
 
-* AMD ROCm inference latency — no AMD GPU is available.
-* Anomalib/PatchCore with a deep CNN backbone — torch/anomalib is not
-  installed because there is no GPU to exercise it on, and the team's
-  compatibility gate forbids installing a CUDA-only PyTorch on this
-  host.
+* AMD ROCm inference latency — no AMD GPU + ROCm runtime is available.
+* Anomalib/PatchCore with a deep CNN backbone — torch/anomalib are not
+  installed because there is no ROCm runtime to exercise them on.
 * MVTec AD AUROC — MVTec is not downloaded (licence check pending).
-  The branch ships a deterministic synthetic fixture generator
-  (`python -m backend.vision.fixtures`) so the integration can be
-  exercised end-to-end without it.
+  `python -m backend.vision.mvtec_download --print-license` shows the
+  licence terms; pass `--accept-license` to actually fetch the data.
 
 ## Reproduction on real AMD hardware
 
@@ -55,19 +69,68 @@ When an AMD ROCm machine becomes available:
 
 1. Install the version-matched ROCm stack per
    https://rocm.docs.amd.com/.
-2. Install the corresponding PyTorch wheel for that ROCm version.
-3. `pip install anomalib` and verify its compatible PatchCore API.
-4. Implement `AnomalibPatchCore` (sketch in `docs/RAFAL_HANDOFF.md`
-   §4c) and select it with `VFG_VISION_BACKEND=anomalib`.
-5. Re-run:
+2. Install the ROCm-matched PyTorch wheel for that ROCm version:
 
    ```bash
-   PYTHONPATH=. python -m pytest -ra tests/
+   pip install --index-url https://download.pytorch.org/whl/rocm torch
    ```
 
-   Then run the latency benchmark block in `docs/RAFAL_HANDOFF.md` §4a
-   and record the GPU model, ROCm version, PyTorch version,
-   Anomalib version, model, input size, batch size, warm-up,
-   measured runs, p50/p95 latency, throughput, and known issues in the
-   `docs/AMD_SETUP.md` template. Do not copy results from another
-   machine.
+3. `pip install anomalib` (verify the chosen version supports the
+   chosen Anomalib/PatchCore).
+4. Download MVTec AD (one category is enough for the demo):
+
+   ```bash
+   python -m backend.vision.mvtec_download --print-license
+   python -m backend.vision.mvtec_download --accept-license \
+       --root data/mvtec_ad --category bottle
+   ```
+
+5. Run the auto-selected backend:
+
+   ```bash
+   export VFG_MVTEC_ROOT=$PWD/data/mvtec_ad
+   export VFG_MVTEC_CATEGORY=bottle
+   PYTHONPATH=. python -m backend.api.server
+   ```
+
+   The autodetect will pick `AnomalibPatchCore` because torch ROCm is
+   available and the dataset is present.
+
+6. Run the AMD benchmark:
+
+   ```bash
+   PYTHONPATH=. python scripts/benchmark_amd.py \
+       --mvtec-root data/mvtec_ad --category bottle --runs 50
+   ```
+
+   The benchmark exits 0 with a JSON record on stdout containing the
+   measured p50/p95/p99 latency, the device name, the torch version,
+   and the ROCm / HIP version. Paste the JSON into the
+   `docs/AMD_SETUP.md` template under the "AMD hardware / GPU",
+   "ROCm version", "PyTorch version", "Anomalib version", "Model and
+   input size", "Batch size", "Warm-up procedure", "Number of
+   measured runs", "Median and p95 latency", "Throughput", and
+   "Known compatibility issues" rows.
+
+## Autodetect contract
+
+The chain is fully deterministic:
+
+| `has_torch_rocm` | `has_amd_hardware` or `has_rocm_runtime` | Selected backend |
+|---|---|---|
+| True  | *    | `anomalib` (Anomalib PatchCore) |
+| False | True | `patchcore-lite` (CPU PatchCore-lite) |
+| False | False| `synthetic` (deterministic fixture) |
+
+Explicit overrides (`VFG_VISION_BACKEND=anomalib|patchcore-lite|synthetic`)
+bypass autodetect. The explicit value always wins; an explicit
+`anomalib` will raise a clear `RuntimeError` if torch/anomalib are not
+importable rather than silently falling back.
+
+## Why a CPU fallback was kept
+
+Even when the host advertises AMD hardware (e.g. via a Vega iGPU),
+the autodetect cannot guarantee a working ROCm userspace. The CPU
+fallback ensures the API still boots and serves real inference, just
+slower. Operators can promote to Anomalib/ROCm by installing the
+matched ROCm stack — the autodetect will pick it up automatically.

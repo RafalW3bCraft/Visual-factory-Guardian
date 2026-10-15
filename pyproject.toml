@@ -8,8 +8,8 @@ version = "0.1.0"
 description = "Evidence-driven industrial anomaly detection — computer vision and telemetry backend."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "TBD" }
-authors = [{ name = "Rafal (g3r4ki)" }]
+license = { text = "MIT" }
+authors = [{ name = "RafalW3bCraft" }]
 dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",

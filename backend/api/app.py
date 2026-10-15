@@ -45,17 +45,74 @@ def _resolve_vision_backend() -> VisionBackend:
 
     Selection rules:
 
-      * ``VFG_VISION_BACKEND=patchcore-lite`` → real CPU PatchCore-lite
+      * ``VFG_VISION_BACKEND=auto`` (default) — autodetect:
+        Anomalib ROCm if torch (ROCm build) + anomalib are importable
+        and ``VFG_MVTEC_ROOT`` points at a real MVTec AD directory;
+        otherwise CPU PatchCore-lite when ``VFG_FIXTURE_ROOT`` has
+        fixture images; otherwise the synthetic fixture.
+      * ``VFG_VISION_BACKEND=anomalib`` — force Anomalib PatchCore.
+        Requires ``VFG_MVTEC_ROOT`` and ``VFG_MVTEC_CATEGORY``.
+      * ``VFG_VISION_BACKEND=patchcore-lite`` — CPU PatchCore-lite
         (requires ``VFG_FIXTURE_ROOT`` populated by ``python -m
         backend.vision.fixtures``).
-      * ``VFG_VISION_BACKEND=synthetic`` (default) → deterministic
-        synthetic fixture scores keyed off the scenario config.
+      * ``VFG_VISION_BACKEND=synthetic`` — deterministic fixture.
     """
-    kind = os.environ.get("VFG_VISION_BACKEND", "synthetic").lower()
-    if kind in {"patchcore-lite", "patchcore-lite-cpu"}:
-        # Lazy import: only required when running real PatchCore-lite
-        from ..scenario.loader import load_scenario
+    import logging
 
+    log = logging.getLogger("vfg.backend")
+
+    from ..vision.amd_detect import summary as _amd_summary
+
+    env = _amd_summary()
+    log.info("AMD environment: %s", env.recommended_backend)
+    log.info("AMD detect summary: %s", env.to_dict())
+
+    kind = os.environ.get("VFG_VISION_BACKEND", "auto").lower()
+
+    if kind == "auto":
+        # Try Anomalib first when the host supports it AND the dataset
+        # is present, else drop down through the chain.
+        if env.has_torch_rocm:
+            mvtec_root = os.environ.get("VFG_MVTEC_ROOT")
+            category = os.environ.get("VFG_MVTEC_CATEGORY")
+            if mvtec_root and category and Path(mvtec_root, category).is_dir():
+                try:
+                    backend = build_backend(
+                        "anomalib",
+                        anomalib_kwargs={
+                            "category": category,
+                            "dataset_root": mvtec_root,
+                            "save_loc_dir": os.environ.get(
+                                "VFG_HEATMAP_DIR", "data/heatmaps"
+                            ),
+                        },
+                    )
+                    log.info("Auto-detect: using AnomalibPatchCore (ROCm)")
+                    return backend
+                except RuntimeError as exc:
+                    log.warning("Auto-detect: Anomalib load failed: %s", exc)
+        fixture_root = _resolve_fixture_root()
+        if fixture_root is not None and env.has_amd_hardware:
+            log.info("Auto-detect: AMD hardware present, using PatchCoreLiteCPU")
+        elif fixture_root is not None and not env.has_amd_hardware:
+            log.info("Auto-detect: fixture images present, using PatchCoreLiteCPU")
+        if fixture_root is not None:
+            scenario_id = os.environ.get("VFG_SCENARIO", "thermal-drift-001")
+            from ..scenario.loader import load_scenario
+
+            scenario = load_scenario(scenario_id)
+            fixture_dir = fixture_root / scenario.scenario_id
+            normals = sorted(fixture_dir.glob("normal_*.png"))
+            if normals:
+                from ..vision.inference import VisionInput
+
+                backend = build_backend("patchcore-lite", input_size=scenario.vision_model.input_size)
+                backend.fit([VisionInput(image_id=p.stem, image_path=p) for p in normals])
+                return backend
+        log.info("Auto-detect: no fixtures found, using SyntheticFixtureBackend")
+        return build_backend("synthetic")
+
+    if kind in {"patchcore-lite", "patchcore-lite-cpu"}:
         fixture_root = _resolve_fixture_root()
         if fixture_root is None:
             raise RuntimeError(
@@ -63,7 +120,10 @@ def _resolve_vision_backend() -> VisionBackend:
                 "VFG_FIXTURE_ROOT does not exist. Run "
                 "`python -m backend.vision.fixtures --scenario thermal-drift-001` first."
             )
-        scenario = load_scenario(os.environ.get("VFG_SCENARIO", "thermal-drift-001"))
+        scenario_id = os.environ.get("VFG_SCENARIO", "thermal-drift-001")
+        from ..scenario.loader import load_scenario
+
+        scenario = load_scenario(scenario_id)
         fixture_dir = fixture_root / scenario.scenario_id
         normals = sorted(fixture_dir.glob("normal_*.png"))
         if not normals:
@@ -71,25 +131,31 @@ def _resolve_vision_backend() -> VisionBackend:
                 f"No normal training images found under {fixture_dir}. "
                 "Run `python -m backend.vision.fixtures` first."
             )
+        from ..vision.inference import VisionInput
+
         backend = build_backend("patchcore-lite", input_size=scenario.vision_model.input_size)
         backend.fit([VisionInput(image_id=p.stem, image_path=p) for p in normals])
         return backend
-    if kind in {"synthetic", "fixture"}:
-        from ..scenario.loader import load_scenario
 
-        scenario = load_scenario(os.environ.get("VFG_SCENARIO", "thermal-drift-001"))
-        fixtures = {
-            i.image_id: (
-                # Use the upper edge of the expected range so the
-                # fixture backend clearly separates normal vs anomalous
-                (i.expected_anomaly_score_range[1] - 0.02)
-                if i.expected_label == "anomalous"
-                else (i.expected_anomaly_score_range[0] + 0.05),
-                i.expected_label,
+    if kind in {"synthetic", "fixture"}:
+        return build_backend("synthetic")
+
+    if kind in {"anomalib", "anomalib-rocm", "patchcore-rocm"}:
+        mvtec_root = os.environ.get("VFG_MVTEC_ROOT")
+        category = os.environ.get("VFG_MVTEC_CATEGORY")
+        if not mvtec_root or not category:
+            raise RuntimeError(
+                "VFG_VISION_BACKEND=anomalib requires VFG_MVTEC_ROOT and VFG_MVTEC_CATEGORY."
             )
-            for i in scenario.inspections
-        }
-        return build_backend("synthetic", fixtures=fixtures)
+        return build_backend(
+            "anomalib",
+            anomalib_kwargs={
+                "category": category,
+                "dataset_root": mvtec_root,
+                "save_loc_dir": os.environ.get("VFG_HEATMAP_DIR", "data/heatmaps"),
+            },
+        )
+
     raise RuntimeError(f"Unknown VFG_VISION_BACKEND: {kind}")
 
 
