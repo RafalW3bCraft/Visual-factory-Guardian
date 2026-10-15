@@ -4,7 +4,35 @@
 
 Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
 
-> **Project status:** Hackathon plan / implementation in progress. Features and performance figures must be marked as planned until implemented and measured.
+> **Project status:** Interactive 3D frontend and deterministic guided investigation implemented in `frontend/`. Backend, real computer vision, manual retrieval and AMD inference remain planned/unverified. The original project plan below is retained for the team.
+
+## Run the interactive factory
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
+
+Open the local URL printed by Vite. For a production build, run `npm run build`, then `npm run preview -- --port 4173`. Use Node 22.12+ (or a supported newer LTS). The implementation was tested with Node 25.8.1; see the test report for the complete environment.
+
+The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for a real procedural factory. Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
+
+**Guided Simulation** is bundled and needs no backend after loading. Every score, signal and product illustration is explicitly synthetic. **Live Analysis** is a separate workspace that stays gated until a configured API passes its readiness check. It validates server records and never replaces errors with fixtures. Configure the public `VITE_API_BASE_URL` via `frontend/.env.example`; never place credentials in a Vite environment variable.
+
+Verification commands: `npm test`, `npm run build`, `npm run format:check`, and `npm run test:e2e`. For browser tests, install Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. Playwright starts the production preview on port 4173.
+
+Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. All geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The repository's overall license remains undecided.
+
+- [Implementation audit](docs/FRONTEND_IMPLEMENTATION_AUDIT.md)
+- [Frontend architecture and limitations](docs/FRONTEND_ARCHITECTURE.md)
+- [Deterministic scenario and controls](docs/INTERACTIVE_DEMO.md)
+- [Presentation guide](docs/PRESENTATION_GUIDE.md)
+- [Live API integration proposal](docs/FRONTEND_API_INTEGRATION.md)
+- [Executed tests and measured performance](docs/FRONTEND_TEST_REPORT.md)
+- [Deployment and asset notes](docs/DEPLOYMENT.md)
+
+---
 
 ## Contents
 
@@ -20,7 +48,7 @@ Visual Factory Guardian is a hackathon prototype for helping production-line ope
 - [Implementation plan](#implementation-plan)
 - [Success metrics](#success-metrics)
 - [Repository structure](#repository-structure)
-- [Getting started](#getting-started)
+- [Planned backend setup](#planned-backend-setup)
 - [API contract proposal](#api-contract-proposal)
 - [Responsible claims and limitations](#responsible-claims-and-limitations)
 - [References](#references)
@@ -362,9 +390,9 @@ visual-factory-guardian/
 
 Create only the directories that are actively used; avoid empty scaffolding that makes the project appear more complete than it is.
 
-## Getting started
+## Planned backend setup
 
-The commands below are a proposed initial workflow; update them to match the actual implementation.
+The commands below are the original backend proposal. The Python package and entry point do not exist yet; use the working frontend setup above for the current demo.
 
 ```bash
 git clone https://github.com/RafalW3bCraft/visual-factory-guardian.git
@@ -439,4 +467,4 @@ Example scores are illustrative and must not be presented as measured results or
 
 ---
 
-**Status note:** This README describes the proposed scope and plan. Update it as implementation, evaluation, deployment, and demo artifacts become real. Do not leave planned features or illustrative values presented as completed work.
+**Status note:** The frontend section documents implemented behavior. The remaining architecture, Python stack, model, dataset and AMD work above describes the retained team proposal; it is not evidence that those services exist.

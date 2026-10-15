@@ -34,3 +34,13 @@ datasets/
 *.h5
 *.npz
 models/cache/
+
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+frontend/test-results/
+frontend/playwright-report/
+*.tsbuildinfo
