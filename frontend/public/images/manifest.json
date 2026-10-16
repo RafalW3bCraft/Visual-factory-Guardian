@@ -1,0 +1,128 @@
+[
+  {
+    "file": "images/factory-960.webp",
+    "subject": "manufacturing hall and robot line",
+    "chapters": [
+      1,
+      6
+    ],
+    "source": "OpenAI built-in image_gen; original generated illustration, 2026-10-16",
+    "source_file": "exec-85bc0cee-5d3a-42b4-92a6-ab3f3cf0adf7.png",
+    "rights": "Generated for this project; no third-party photography or dataset imagery. Repository MIT license; no claim of real customer deployment.",
+    "dimensions": [
+      960,
+      480
+    ],
+    "format": "WebP",
+    "bytes": 102952,
+    "mobile_crop": "750x1100 portrait, focal x 0.90 to retain orange robot",
+    "loading": "eager/high priority in chapter 01; lazy in chapter 06",
+    "fallback": "graphite background, visible failure caption, full semantic story remains readable"
+  },
+  {
+    "file": "images/factory-1600.webp",
+    "subject": "manufacturing hall and robot line",
+    "chapters": [
+      1,
+      6
+    ],
+    "source": "OpenAI built-in image_gen; original generated illustration, 2026-10-16",
+    "source_file": "exec-85bc0cee-5d3a-42b4-92a6-ab3f3cf0adf7.png",
+    "rights": "Generated for this project; no third-party photography or dataset imagery. Repository MIT license; no claim of real customer deployment.",
+    "dimensions": [
+      1600,
+      800
+    ],
+    "format": "WebP",
+    "bytes": 220396,
+    "mobile_crop": "750x1100 portrait, focal x 0.90 to retain orange robot",
+    "loading": "eager/high priority in chapter 01; lazy in chapter 06",
+    "fallback": "graphite background, visible failure caption, full semantic story remains readable"
+  },
+  {
+    "file": "images/factory-mobile.webp",
+    "subject": "manufacturing hall and robot line",
+    "chapters": [
+      1,
+      6
+    ],
+    "source": "OpenAI built-in image_gen; original generated illustration, 2026-10-16",
+    "source_file": "exec-85bc0cee-5d3a-42b4-92a6-ab3f3cf0adf7.png",
+    "rights": "Generated for this project; no third-party photography or dataset imagery. Repository MIT license; no claim of real customer deployment.",
+    "dimensions": [
+      750,
+      1100
+    ],
+    "format": "WebP",
+    "bytes": 130208,
+    "mobile_crop": "750x1100 portrait, focal x 0.90 to retain orange robot",
+    "loading": "eager/high priority in chapter 01; lazy in chapter 06",
+    "fallback": "graphite background, visible failure caption, full semantic story remains readable"
+  },
+  {
+    "file": "images/motor-960.webp",
+    "subject": "motor, drive coupling and bearing housing",
+    "chapters": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "source": "OpenAI built-in image_gen; original generated illustration, 2026-10-16",
+    "source_file": "exec-61d52752-5d73-4160-a059-52ad3a63091d.png",
+    "rights": "Generated for this project; no third-party photography or dataset imagery. Repository MIT license; no claim of real customer deployment.",
+    "dimensions": [
+      960,
+      640
+    ],
+    "format": "WebP",
+    "bytes": 83726,
+    "mobile_crop": "750x1100 portrait, focal x 0.66",
+    "loading": "native lazy loading in all machinery scenes",
+    "fallback": "graphite background, visible failure caption, full semantic story remains readable"
+  },
+  {
+    "file": "images/motor-1600.webp",
+    "subject": "motor, drive coupling and bearing housing",
+    "chapters": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "source": "OpenAI built-in image_gen; original generated illustration, 2026-10-16",
+    "source_file": "exec-61d52752-5d73-4160-a059-52ad3a63091d.png",
+    "rights": "Generated for this project; no third-party photography or dataset imagery. Repository MIT license; no claim of real customer deployment.",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "format": "WebP",
+    "bytes": 158566,
+    "mobile_crop": "750x1100 portrait, focal x 0.66",
+    "loading": "native lazy loading in all machinery scenes",
+    "fallback": "graphite background, visible failure caption, full semantic story remains readable"
+  },
+  {
+    "file": "images/motor-mobile.webp",
+    "subject": "motor, drive coupling and bearing housing",
+    "chapters": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "source": "OpenAI built-in image_gen; original generated illustration, 2026-10-16",
+    "source_file": "exec-61d52752-5d73-4160-a059-52ad3a63091d.png",
+    "rights": "Generated for this project; no third-party photography or dataset imagery. Repository MIT license; no claim of real customer deployment.",
+    "dimensions": [
+      750,
+      1100
+    ],
+    "format": "WebP",
+    "bytes": 91496,
+    "mobile_crop": "750x1100 portrait, focal x 0.66",
+    "loading": "native lazy loading in all machinery scenes",
+    "fallback": "graphite background, visible failure caption, full semantic story remains readable"
+  }
+]
