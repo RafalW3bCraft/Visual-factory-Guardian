@@ -1,0 +1,43 @@
+{
+  "line_profile": "tile-kiln-line-01",
+  "description": "Synthetic knowledge base for a ceramic-tile firing line. Maps measurable sensor behaviour to documented failure modes. All ranges are illustrative for a SIMULATED line and are not real industrial thresholds.",
+  "normal_ranges": {
+    "temperature": {"low": 60.0, "high": 75.0, "unit": "degC"},
+    "vibration": {"low": 0.0, "high": 3.5, "unit": "mm_s"},
+    "motor_current": {"low": 8.0, "high": 14.0, "unit": "A"}
+  },
+  "failure_modes": [
+    {
+      "cause": "Kiln overheating causing thermal-stress surface cracking",
+      "metric": "temperature",
+      "direction": "rising",
+      "keywords": ["temperature", "overheating", "thermal", "stress", "crack", "firing", "cooling"],
+      "base_prior": 0.6,
+      "rationale": "Firing temperature above the documented band induces thermal stress that can produce micro-cracks and surface crazing on tiles."
+    },
+    {
+      "cause": "Mechanical misalignment / excess vibration marring the surface",
+      "metric": "vibration",
+      "direction": "rising",
+      "keywords": ["vibration", "alignment", "misalignment", "bearing", "mechanical", "surface", "scratch"],
+      "base_prior": 0.45,
+      "rationale": "Elevated vibration from worn bearings or misalignment can transfer to the product and cause surface defects."
+    },
+    {
+      "cause": "Drive-motor overload / conveyor load anomaly",
+      "metric": "motor_current",
+      "direction": "rising",
+      "keywords": ["motor", "current", "load", "overload", "drive", "conveyor", "jam"],
+      "base_prior": 0.4,
+      "rationale": "A sustained rise in motor current can indicate a conveyor jam or drive overload disturbing the process."
+    },
+    {
+      "cause": "Under-firing from temperature drop (incomplete vitrification)",
+      "metric": "temperature",
+      "direction": "falling",
+      "keywords": ["temperature", "under-firing", "vitrification", "cooling", "firing"],
+      "base_prior": 0.35,
+      "rationale": "Firing temperature below the documented band can leave tiles under-fired, changing appearance and strength."
+    }
+  ]
+}
