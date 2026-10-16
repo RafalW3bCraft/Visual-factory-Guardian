@@ -4,7 +4,7 @@
 
 Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
 
-> **Project status:** Interactive 3D frontend and deterministic guided investigation implemented in `frontend/`. Backend, real computer vision, manual retrieval and AMD inference remain planned/unverified. The original project plan below is retained for the team.
+> **Project status:** The seven-chapter cinematic landing page and interactive guided investigation are implemented in `frontend/`. Python vision, telemetry and API modules are present (see the branch addendum below). The landing story uses explicitly synthetic visuals and telemetry; its explanation is deterministic. Manual retrieval and AMD inference validation remain unverified. The original project plan below is retained for the team.
 
 ## Run the interactive factory
 
@@ -16,14 +16,18 @@ npm run dev
 
 Open the local URL printed by Vite. For a production build, run `npm run build`, then `npm run preview -- --port 4173`. Use Node 22.12+ (or a supported newer LTS). The implementation was tested with Node 25.8.1; see the test report for the complete environment.
 
-The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for a real procedural factory. Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
+Open `/` for the continuous seven-chapter scroll story, or `/dashboard` for the existing operator investigation application. The landing uses one persistent React Three Fiber Canvas and GSAP ScrollTrigger to synchronize camera travel, product inspection, machine disassembly, sensor evidence and reassembly. It is a bundled guided simulation and needs no backend.
+
+The React/TypeScript/Vite dashboard uses Three.js, React Three Fiber and Drei for a real procedural factory. Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
 
 **Guided Simulation** is bundled and needs no backend after loading. Every score, signal and product illustration is explicitly synthetic. **Live Analysis** is a separate workspace that stays gated until a configured API passes its readiness check. It validates server records and never replaces errors with fixtures. Configure the public `VITE_API_BASE_URL` via `frontend/.env.example`; never place credentials in a Vite environment variable.
 
 Verification commands: `npm test`, `npm run build`, `npm run format:check`, and `npm run test:e2e`. For browser tests, install Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. Playwright starts the production preview on port 4173.
 
-Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. All geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The repository's overall license remains undecided.
+Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. All geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The repository is MIT-licensed. The cinematic landing bundles Barlow Condensed and DM Sans under the SIL Open Font License; copies ship in `frontend/public/licenses/`.
 
+- [Cinematic design and reference study](docs/CINEMATIC_DESIGN.md)
+- [Cinematic verification and performance](docs/CINEMATIC_VERIFICATION.md)
 - [Implementation audit](docs/FRONTEND_IMPLEMENTATION_AUDIT.md)
 - [Frontend architecture and limitations](docs/FRONTEND_ARCHITECTURE.md)
 - [Deterministic scenario and controls](docs/INTERACTIVE_DEMO.md)

@@ -23,3 +23,11 @@ On 15 October 2026 the feature branch was pushed and [PR #1](https://github.com/
 Vercel project `visual-factory-guardian` was created (project ID `prj_A5hUiULVQHHrVrdbLBXSXnTnSVA8`, team ID `team_fOEXDlvAZC67JiVN1Dt8PQUl`). The deployment request then failed with HTTP 403: the connector was not authorized for scope `donyas-projects-22c35d05`. The documented CLI fallback was attempted for the same team/project and reported no stored credentials; its interactive login was cancelled.
 
 No deployment was created or verified, and there is no public site URL to report. The next step is to authorize the Vercel connection for that team or run `vercel login` locally, then deploy the existing project from this feature branch. No credentials are stored in this repository.
+
+## Cinematic landing update — 16 October 2026
+
+The landing story is served at `/`; the existing operator app is preserved at `/dashboard`. Existing SPA rewrites support both routes. Use the `codex/cinematic-factory-story` branch for review of this change. The landing has no API dependency and never silently substitutes a fixture for a live result.
+
+Unlike the original dashboard, the landing includes locally bundled Barlow Condensed and DM Sans fonts (SIL OFL 1.1); license copies are served under `/licenses/`. The current repository also contains an MIT LICENSE. No video-reference frames, public benchmark images, third-party 3D models or proprietary assets are redistributed. The original deployment outcome above is historical, not evidence of a public deployment for this branch.
+
+See `CINEMATIC_VERIFICATION.md` for executed browser checks, responsive screenshots, performance measurements and publication status.
