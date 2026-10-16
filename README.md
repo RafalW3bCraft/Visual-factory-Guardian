@@ -4,7 +4,18 @@
 
 Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
 
-> **Project status:** Interactive 3D frontend and deterministic guided investigation implemented in `frontend/`. Backend, real computer vision, manual retrieval and AMD inference remain planned/unverified. The original project plan below is retained for the team.
+> **Project status:** A six-chapter cinematic landing page and working interactive 3D guided simulation are implemented in `frontend/`. The repository also contains FastAPI, deterministic telemetry, CPU PatchCore-lite and optional Anomalib integration. Landing-page imagery and inspection markers are illustrative; the guided demo uses synthetic data. LLM/manual retrieval and production/AMD validation are not claimed. Historical plans and branch notes below are retained for context.
+
+## Cinematic factory experience
+
+Open `/` for the photographic story, or `/#/demo` for the preserved interactive factory. Six chapters connect factory scale, inspection focus, vision, sensor context, evidence and human review. One native sticky desktop sequence drives reversible image movement and inspection annotations; mobile and reduced-motion modes use static compositions. No new animation dependency or WebGL is loaded by the landing page.
+
+Two original AI-generated industrial illustrations are served locally as responsive WebP images, with clear simulation disclosures. The first photographic frame is present before JavaScript starts; subsequent media is lazy-loaded. Real telemetry fixture values are imported from the existing deterministic simulator.
+
+- [Landing architecture, development, browser support and limitations](docs/CINEMATIC_EXPERIENCE.md)
+- [Asset generation prompts and provenance](docs/CINEMATIC_ASSETS.md)
+- [Per-asset dimensions, sizes, crops and loading strategy](frontend/public/images/manifest.json)
+- [Cinematic verification report](docs/CINEMATIC_VERIFICATION.md)
 
 ## Run the interactive factory
 
@@ -22,7 +33,7 @@ The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for
 
 Verification commands: `npm test`, `npm run build`, `npm run format:check`, and `npm run test:e2e`. For browser tests, install Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. Playwright starts the production preview on port 4173.
 
-Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. All geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The repository's overall license remains undecided.
+Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. The demo geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The landing uses generated imagery with documented provenance. Repository code is MIT; see `LICENSE`.
 
 - [Implementation audit](docs/FRONTEND_IMPLEMENTATION_AUDIT.md)
 - [Frontend architecture and limitations](docs/FRONTEND_ARCHITECTURE.md)

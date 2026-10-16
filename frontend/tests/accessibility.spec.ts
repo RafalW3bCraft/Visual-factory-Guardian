@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 test("WCAG A/AA automated checks for overview, evidence and backend error", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#/demo");
   await page.getByRole("button", { name: "Pause scenario" }).click();
   for (const scene of [0, 5]) {
     await page

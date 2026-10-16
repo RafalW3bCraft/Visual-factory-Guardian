@@ -1,3 +1,4 @@
+import "./styles.css";
 import { lazy, Suspense, useEffect, useReducer, useState } from "react";
 import {
   ArrowUpRight,
@@ -254,6 +255,13 @@ export default function App() {
           <button onClick={() => setTeam(true)}>Project</button>
         </nav>
         <div className="header-actions">
+          <a
+            className="back-to-film"
+            href="#factory"
+            aria-label="Return to the factory story"
+          >
+            ← <span>Factory story</span>
+          </a>
           <button
             className="presentation-button"
             onClick={() => {

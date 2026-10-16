@@ -1,0 +1,81 @@
+[
+  {
+    "profile": "1440px / unthrottled localhost",
+    "load": {
+      "lcp": 56,
+      "cls": 0,
+      "longTasks": [],
+      "resources": [
+        {
+          "name": "factory-1600.webp",
+          "bytes": 220696
+        },
+        {
+          "name": "index-CN5CSo32.js",
+          "bytes": 75951
+        },
+        {
+          "name": "index-NNTV0PB4.css",
+          "bytes": 4394
+        },
+        {
+          "name": "favicon.svg",
+          "bytes": 574
+        },
+        {
+          "name": "motor-1600.webp",
+          "bytes": 158866
+        }
+      ]
+    },
+    "scroll": {
+      "frames": 143,
+      "p95_ms": 16.799999999999955,
+      "max_ms": 133.39999999999986
+    },
+    "heapBytesAfterDemoRoundTrips": [
+      7699244,
+      7771744,
+      7843520,
+      7882848,
+      7953852,
+      7943400
+    ]
+  },
+  {
+    "profile": "390px / CPU 4x / 1.6Mbps / 80ms RTT",
+    "load": {
+      "lcp": 264,
+      "cls": 0,
+      "longTasks": [],
+      "resources": [
+        {
+          "name": "factory-mobile.webp",
+          "bytes": 130508
+        },
+        {
+          "name": "index-CN5CSo32.js",
+          "bytes": 75951
+        },
+        {
+          "name": "index-NNTV0PB4.css",
+          "bytes": 4394
+        },
+        {
+          "name": "motor-mobile.webp",
+          "bytes": 91796
+        },
+        {
+          "name": "favicon.svg",
+          "bytes": 574
+        }
+      ]
+    },
+    "scroll": {
+      "frames": 151,
+      "p95_ms": 16.700000000000728,
+      "max_ms": 16.800000000000182
+    },
+    "heapBytesAfterDemoRoundTrips": []
+  }
+]

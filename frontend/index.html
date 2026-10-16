@@ -3,16 +3,113 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080b10" />
+    <meta name="theme-color" content="#080a0c" />
     <meta
       name="description"
-      content="Explore a 3D production line and connect visual anomalies with simulated machine telemetry in an evidence-driven investigation."
+      content="Step inside an industrial intelligence prototype. Explore machine vision, synthetic sensor context and evidence-led engineering investigation."
     />
-    <title>Visual Factory Guardian — Every defect has a story</title>
+    <title>Visual Factory Guardian — See the factory differently</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="preload"
+      as="image"
+      href="/images/factory-mobile.webp"
+      media="(max-width: 600px)"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="/images/factory-1600.webp"
+      imagesrcset="/images/factory-960.webp 960w, /images/factory-1600.webp 1600w"
+      imagesizes="100vw"
+      media="(min-width: 601px)"
+      fetchpriority="high"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: #080a0c;
+        color: #f0f0ec;
+      }
+      .initial-scene {
+        height: 100svh;
+        min-height: 800px;
+        position: relative;
+        overflow: hidden;
+      }
+      .initial-scene img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 64% 50%;
+      }
+      .initial-scene p {
+        position: absolute;
+        left: 7%;
+        top: 35%;
+        font:
+          clamp(58px, 8vw, 120px)/0.95 Arial,
+          sans-serif;
+        letter-spacing: -0.07em;
+        text-shadow: 0 2px 40px #080a0c;
+      }
+      .initial-scene span {
+        display: block;
+        font-size: 14px;
+        letter-spacing: 0;
+        margin-top: 30px;
+      }
+      @media (min-width: 768px) and (max-height: 800px) {
+        .initial-scene {
+          min-height: 720px;
+        }
+      }
+      @media (max-width: 767px) {
+        .initial-scene {
+          min-height: 760px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="initial-scene">
+        <picture
+          ><source
+            media="(max-width: 600px)"
+            srcset="/images/factory-mobile.webp" />
+          <img
+            src="/images/factory-1600.webp"
+            srcset="
+              /images/factory-960.webp   960w,
+              /images/factory-1600.webp 1600w
+            "
+            sizes="100vw"
+            width="1600"
+            height="800"
+            alt="Generated industrial factory illustration"
+            fetchpriority="high"
+        /></picture>
+        <p>
+          The factory<br />never stops.<span
+            >Visual Factory Guardian — loading the experience</span
+          >
+        </p>
+      </div>
+    </div>
+    <noscript
+      ><p style="padding: 24px; font: 16px Arial">
+        Enable JavaScript to explore the six chapters and the guided simulation.
+        This hackathon prototype uses generated industrial illustrations and
+        synthetic telemetry.
+        <a
+          style="color: #ffad61"
+          href="https://github.com/RafalW3bCraft/Visual-factory-Guardian"
+          >Read the project documentation</a
+        >.
+      </p></noscript
+    >
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
