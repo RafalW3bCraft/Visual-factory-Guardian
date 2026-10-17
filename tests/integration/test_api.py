@@ -123,13 +123,40 @@ def test_analysis_endpoint_includes_evidence_and_causes() -> None:
         assert body["event_id"] == "evt-004"
         assert body["scenario_id"] == "thermal-drift-001"
         assert body["line_id"] == "line-01"
+        # Three sensors -> three evidence items; each is a distinct, stable id
+        # emitted by the analysis adapter from the live sensor stream.
         assert len(body["sensor_evidence"]) == 3
         assert any("temperature" in e["summary"] for e in body["sensor_evidence"])
+        assert all(
+            e["evidence_id"].startswith("evt-004-E") for e in body["sensor_evidence"]
+        )
+        assert len({e["evidence_id"] for e in body["sensor_evidence"]}) == 3
         assert len(body["candidate_causes"]) >= 1
-        # No maintenance manual was supplied → citations must be empty
-        assert body["manual_citations"] == []
-        # Recommended action must be advisory-only text
-        assert body["recommended_action"] is None or "Advisory" in body["recommended_action"]
+        # The top-ranked cause must be grounded: it must reference one of the
+        # evidence_ids that actually appears in sensor_evidence, never an
+        # invented orphan id.
+        valid_ids = {e["evidence_id"] for e in body["sensor_evidence"]}
+        for c in body["candidate_causes"]:
+            assert c["evidence_ids"], "candidate must reference evidence"
+            assert all(eid in valid_ids for eid in c["evidence_ids"]), (
+                f"orphan evidence id in {c}"
+            )
+            assert c["uncertainty"] in {"low", "medium", "high"}
+        # The synthetic maintenance manual IS supplied for the integrated
+        # scenario; the retrieval layer must surface traceable citations,
+        # each with title, reference and excerpt. The reference must name
+        # the section (and page when available).
+        assert body["manual_citations"], "expected manual citations for evt-004"
+        for m in body["manual_citations"]:
+            assert m["title"]
+            assert "Section" in m["reference"]
+            assert m["excerpt"]
+        # The recommended action must always require human review and never
+        # assert certain machine action. The reasoning service emits text
+        # that contains "Human review required".
+        action = body["recommended_action"]
+        assert action is not None
+        assert "Human review required" in action or "human" in action.lower()
 
 
 def test_analysis_endpoint_unknown_event_404() -> None:
