@@ -4,7 +4,7 @@
 
 Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
 
-> **Project status:** The seven-chapter cinematic landing page and interactive guided investigation are implemented in `frontend/`. Python vision, telemetry and API modules are present (see the branch addendum below). The landing story uses explicitly synthetic visuals and telemetry; its explanation is deterministic. Manual retrieval and AMD inference validation remain unverified. The original project plan below is retained for the team.
+| **Project status:** The seven-chapter cinematic landing page and interactive guided investigation are implemented in `frontend/`. The Python vision, telemetry, statistical evidence, manual retrieval and reasoning layers are integrated into the FastAPI service. The single active `GET /api/v1/analysis/{event_id}` endpoint is now backed by `backend.reasoning.service.ReasoningService`; candidate causes, manual citations, recommended action and explanation are produced by that service and adapted to the frontend Zod schema by `backend.api.analysis_adapter`. The synthetic maintenance manual ships with the repository and is cited as a demonstration manual — never as an industry-certified operating instruction. AMD inference: the OpenAI-compatible LLM hook is wired and unit-tested with a mock server; a real call against the AMD TokenFactory API requires an account-specific endpoint URL and API key, which were not configured in this environment — see `docs/AMD_LLM_INTEGRATION.md` for the exact status. |
 
 ## Run the interactive factory
 
@@ -504,8 +504,21 @@ Example scores are illustrative and must not be presented as measured results or
 * An **event-alignment** layer and a **sensor evidence builder** that
   compute rolling baselines, threshold breaches, drift lead/lag, and a
   deterministic evidence-grounded explanation.
-* **77 tests** (unit + integration + live-uvicorn smoke) that pass in
-  ~4 seconds on CPU.
+* The **reasoning layer** (`backend.reasoning/`) — the statistical
+  `RootCauseEngine`, the BM25-based maintenance-manual retriever, and the
+  `Explainer` that combines them. The live API calls `ReasoningService`
+  for `GET /api/v1/analysis/{event_id}`; an analysis adapter
+  (`backend.api.analysis_adapter`) maps the rich service output to the
+  narrow frontend schema and filters the live sensor stream to the
+  scenario, line and pre-event window so the engine cannot peek into
+  the future.
+* An **optional AMD-hosted LLM hook** (`backend.reasoning.llm_client`)
+  that speaks the OpenAI-compatible `POST /chat/completions` protocol.
+  Configured via `VFG_LLM_ENDPOINT` / `VFG_LLM_MODEL` / `VFG_LLM_API_KEY`,
+  it is the integration path for the AMD TokenFactory chat-completions
+  API. See `docs/AMD_LLM_INTEGRATION.md` for the verified wire-format
+  contract and the exact credentials needed for a real call.
+* **106 tests** (unit + integration + smoke) that pass in ~7 seconds on CPU.
 
 ### Setup (CPU — works everywhere)
 
@@ -665,11 +678,19 @@ LICENSE                        # MIT, Copyright (c) 2026 RafalW3bCraft
 
 * **Frontend adapter:** the response shapes match `frontend/src/services/api.ts`
   byte-for-byte; `VITE_API_BASE_URL=https://<host>` is all that's needed.
-* **Root-cause / LLM:** consume `GET /api/v1/analysis/{event_id}` for the
-  full `Analysis` payload (sensor evidence + candidate causes +
-  explanation + recommended action). Add a new `llm_explanation`
-  field if you want to replace the deterministic explanation; do not
-  edit the existing `explanation` in place.
+* **Root-cause / LLM:** `GET /api/v1/analysis/{event_id}` is now served by
+  `backend.api.analysis_adapter.build_analysis_payload`, which calls
+  `backend.reasoning.service.ReasoningService` and adapts the rich service
+  output to the documented `Analysis` schema (evidence ids, candidate
+  causes, manual citations with title/reference/excerpt, advisory-only
+  recommended action). There is exactly one active GET handler for that
+  route; the alternative router in `backend/api/analysis_router.py` is not
+  mounted in the live app. The AMD LLM hook is the
+  OpenAI-compatible `LLMClient` configured via `VFG_LLM_ENDPOINT` /
+  `VFG_LLM_MODEL` / `VFG_LLM_API_KEY`; the explainer only **verbalises**
+  the structured evidence — the ranking stays with the statistical engine.
+  See `docs/AMD_LLM_INTEGRATION.md` for the verified wire format and the
+  exact credentials required for a real AMD TokenFactory call.
 * **AMD validation:** when real hardware is available, run
   `scripts/benchmark_amd.py` and paste the JSON output into the
   template at `docs/AMD_SETUP.md`. Do not copy results from another

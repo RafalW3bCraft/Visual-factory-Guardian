@@ -62,6 +62,18 @@ class RootCauseEngine:
             self.kb = json.load(fh)
         self.normal_ranges: Dict[str, dict] = self.kb.get("normal_ranges", {})
         self.failure_modes: List[dict] = self.kb.get("failure_modes", [])
+        # Metric aliases allow the same failure-mode definition to apply to
+        # different metric names across the legacy mock scenario and the
+        # integrated thermal-drift-001 scenario (e.g. ``motor_current`` and
+        # ``current`` both describe the same conveyor drive signal).
+        raw_aliases = self.kb.get("metric_aliases", {})
+        self.metric_aliases: Dict[str, str] = {
+            str(k): str(v) for k, v in raw_aliases.items()
+        }
+
+    def canonical_metric(self, metric: str) -> str:
+        """Return the canonical metric name after alias resolution."""
+        return self.metric_aliases.get(metric, metric)
 
     # ------------------------------------------------------------------ #
     def build_evidence(
@@ -70,7 +82,12 @@ class RootCauseEngine:
         evidence: List[SensorEvidence] = []
         for sensor_id, group in group_by_sensor(readings).items():
             metric = group[0].metric
+            # Range lookup prefers the raw metric (preserves the actual
+            # operating band for legacy mocks that used motor_current);
+            # aliases apply only when the raw range is absent.
             rng = self.normal_ranges.get(metric, {})
+            if not rng:
+                rng = self.normal_ranges.get(self.canonical_metric(metric), {})
             ev = analyse_signal(
                 group,
                 event_ts,
@@ -87,7 +104,8 @@ class RootCauseEngine:
     ) -> List[CandidateCause]:
         by_metric: Dict[str, List[SensorEvidence]] = {}
         for ev in evidence:
-            by_metric.setdefault(ev.metric, []).append(ev)
+            canonical = self.canonical_metric(ev.metric)
+            by_metric.setdefault(canonical, []).append(ev)
 
         candidates: List[CandidateCause] = []
         for mode in self.failure_modes:

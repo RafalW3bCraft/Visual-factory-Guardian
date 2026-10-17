@@ -22,7 +22,10 @@ def main() -> None:
     parser.add_argument(
         "--backend",
         default=os.environ.get("VFG_VISION_BACKEND", "synthetic"),
-        choices=["synthetic", "patchcore-lite"],
+        # ``auto`` and ``anomalib`` align with the environment-variable
+        # selections supported by ``backend.api.app``. ``patchcore-lite``
+        # and ``synthetic`` remain available as explicit fast paths.
+        choices=["auto", "synthetic", "patchcore-lite", "anomalib"],
     )
     parser.add_argument("--fixture-root", default=os.environ.get("VFG_FIXTURE_ROOT", "data/fixtures"))
     parser.add_argument("--scenario", default=os.environ.get("VFG_SCENARIO", "thermal-drift-001"))

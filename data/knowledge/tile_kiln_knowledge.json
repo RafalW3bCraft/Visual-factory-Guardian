@@ -1,10 +1,14 @@
 {
   "line_profile": "tile-kiln-line-01",
-  "description": "Synthetic knowledge base for a ceramic-tile firing line. Maps measurable sensor behaviour to documented failure modes. All ranges are illustrative for a SIMULATED line and are not real industrial thresholds.",
+  "description": "Synthetic knowledge base for a ceramic-tile firing line. Maps measurable sensor behaviour to documented failure modes. All ranges are illustrative for a SIMULATED line and are not real industrial thresholds. The simulated line uses metric=current (legacy mocks used motor_current); the engine treats both as aliases.",
   "normal_ranges": {
     "temperature": {"low": 60.0, "high": 75.0, "unit": "degC"},
     "vibration": {"low": 0.0, "high": 3.5, "unit": "mm_s"},
+    "current": {"low": 35.0, "high": 55.0, "unit": "A"},
     "motor_current": {"low": 8.0, "high": 14.0, "unit": "A"}
+  },
+  "metric_aliases": {
+    "motor_current": "current"
   },
   "failure_modes": [
     {
@@ -25,7 +29,7 @@
     },
     {
       "cause": "Drive-motor overload / conveyor load anomaly",
-      "metric": "motor_current",
+      "metric": "current",
       "direction": "rising",
       "keywords": ["motor", "current", "load", "overload", "drive", "conveyor", "jam"],
       "base_prior": 0.4,

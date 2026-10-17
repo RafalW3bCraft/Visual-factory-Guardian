@@ -16,7 +16,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from ..scenario.loader import list_scenarios
 from ..vision.inference import VisionBackend, build_backend
 from ..vision.inference import VisionInput
-from .payloads import analysis_to_payload, event_to_payload
+from .analysis_adapter import (
+    build_analysis_payload,
+    build_sensor_id_to_evidence,
+)
+from .payloads import event_to_payload
 from .registry import RuntimeRegistry
 from .schemas import (
     Analysis,
@@ -336,7 +340,6 @@ def create_app() -> FastAPI:
         if insp is None:
             raise HTTPException(status_code=404, detail=f"Unknown event_id: {event_id}")
 
-        evidence = runtime.evidence_for(event_id)
         fixture_root = _resolve_fixture_root()
         img_path = None
         if fixture_root is not None:
@@ -345,13 +348,44 @@ def create_app() -> FastAPI:
                 img_path = candidate
         vision = backend.predict(VisionInput(image_id=insp.image_id, image_path=img_path))
 
-        payload = analysis_to_payload(
-            scenario=runtime.scenario,
+        # The event timestamp the frontend and the rest of the system use is
+        # epoch_utc + at_seconds. Reconstruct the matching ISO Z timestamp so
+        # the reasoning service sees the same wall-clock the live API returns.
+        from datetime import datetime, timedelta, timezone
+
+        event_dt = runtime.scenario.epoch_utc + timedelta(seconds=insp.at_seconds)
+        if event_dt.tzinfo is None:
+            event_dt = event_dt.replace(tzinfo=timezone.utc)
+        event_ts_iso = event_dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Convert the live sensor records to plain dicts for the adapter.
+        readings_dicts = [r.to_dict() for r in runtime.sensor_records]
+        # Stable mapping live stream sensor_id -> frontend evidence_id; the
+        # adapter fills in any extras it observes from the service output.
+        sensor_id_map = build_sensor_id_to_evidence(event_id, readings_dicts)
+
+        event_dict = {
+            "schema_version": "1.0",
+            "event_id": event_id,
+            "timestamp": event_ts_iso,
+            "scenario_id": runtime.scenario.scenario_id,
+            "line_id": runtime.scenario.line_id,
+            "image_id": insp.image_id,
+            "detection": {
+                "model": vision.detection.model,
+                "anomaly_score": float(vision.detection.anomaly_score),
+                "localization_ref": vision.detection.localization_ref,
+            },
+        }
+
+        payload = build_analysis_payload(
             event_id=event_id,
-            image_id=insp.image_id,
-            inspection_seconds=insp.at_seconds,
-            vision=vision,
-            evidence=evidence,
+            scenario_id=runtime.scenario.scenario_id,
+            line_id=runtime.scenario.line_id,
+            event_timestamp=event_ts_iso,
+            event_dict=event_dict,
+            readings=readings_dicts,
+            sensor_id_to_evidence=sensor_id_map,
         )
         return Analysis.model_validate(payload)
 
