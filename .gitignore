@@ -44,3 +44,6 @@ dist/
 frontend/test-results/
 frontend/playwright-report/
 *.tsbuildinfo
+
+# Reproducible local backend test images
+data/fixtures/

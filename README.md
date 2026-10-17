@@ -4,18 +4,17 @@
 
 Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
 
-> **Project status:** A six-chapter cinematic landing page and working interactive 3D guided simulation are implemented in `frontend/`. The repository also contains FastAPI, deterministic telemetry, CPU PatchCore-lite and optional Anomalib integration. Landing-page imagery and inspection markers are illustrative; the guided demo uses synthetic data. LLM/manual retrieval and production/AMD validation are not claimed. Historical plans and branch notes below are retained for context.
+> **Project status:** A scroll-controlled articulated manufacturing cell and interactive operator demo are implemented in `frontend/`. The same deterministic 56-second timeline drives robotic handling, conveyor transport, inspection, sensor context and review. Inspection scores, telemetry and explanations are explicitly synthetic. The existing simulation, presentation mode and backend readiness workflow remain accessible at `/#/console`.
 
-## Cinematic factory experience
+## Interactive factory simulation 2.0
 
-Open `/` for the photographic story, or `/#/demo` for the preserved interactive factory. Six chapters connect factory scale, inspection focus, vision, sensor context, evidence and human review. One native sticky desktop sequence drives reversible image movement and inspection annotations; mobile and reduced-motion modes use static compositions. No new animation dependency or WebGL is loaded by the landing page.
+Open `/` and scroll to operate the cell. Scroll backward to reverse it; stop to hold the exact pose. Keyboard stage buttons and the step-control option provide direct access. Reduced-motion users receive step controls and a fixed camera. At the final stage, **Enter interactive demo** transfers the current scenario time to `/#/demo`.
 
-Two original AI-generated industrial illustrations are served locally as responsive WebP images, with clear simulation disclosures. The first photographic frame is present before JavaScript starts; subsequent media is lazy-loaded. Real telemetry fixture values are imported from the existing deterministic simulator.
+The demo supports start/pause/resume/restart, timeline seeking, equipment selection, inspection tracking, magnified surface evidence, three sensor trends, a traceable explanation, and confirm/reject/reinspection decisions with session history. Decisions are local and create no external work orders. The original console and real API integration are preserved behind **Existing simulation & backend console**.
 
-- [Landing architecture, development, browser support and limitations](docs/CINEMATIC_EXPERIENCE.md)
-- [Asset generation prompts and provenance](docs/CINEMATIC_ASSETS.md)
-- [Per-asset dimensions, sizes, crops and loading strategy](frontend/public/images/manifest.json)
-- [Cinematic verification report](docs/CINEMATIC_VERIFICATION.md)
+- [Simulation architecture, timeline, asset sources and limitations](docs/FACTORY_SIMULATION_2.md)
+- [Executed verification and review instructions](docs/SIMULATION_2_VERIFICATION.md)
+- [Previous photographic introduction (historical)](docs/CINEMATIC_EXPERIENCE.md)
 
 ## Run the interactive factory
 
@@ -27,13 +26,13 @@ npm run dev
 
 Open the local URL printed by Vite. For a production build, run `npm run build`, then `npm run preview -- --port 4173`. Use Node 22.12+ (or a supported newer LTS). The implementation was tested with Node 25.8.1; see the test report for the complete environment.
 
-The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for a real procedural factory. Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
+The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for the procedural factory. The following original console features remain available at `/#/console`: Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
 
 **Guided Simulation** is bundled and needs no backend after loading. Every score, signal and product illustration is explicitly synthetic. **Live Analysis** is a separate workspace that stays gated until a configured API passes its readiness check. It validates server records and never replaces errors with fixtures. Configure the public `VITE_API_BASE_URL` via `frontend/.env.example`; never place credentials in a Vite environment variable.
 
 Verification commands: `npm test`, `npm run build`, `npm run format:check`, and `npm run test:e2e`. For browser tests, install Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. Playwright starts the production preview on port 4173.
 
-Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. The demo geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The landing uses generated imagery with documented provenance. Repository code is MIT; see `LICENSE`.
+Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. The demo geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The current landing uses the same procedural scene as the new demo. Earlier generated imagery remains in the repository but is not downloaded by this experience. Repository code is MIT; see `LICENSE`.
 
 - [Implementation audit](docs/FRONTEND_IMPLEMENTATION_AUDIT.md)
 - [Frontend architecture and limitations](docs/FRONTEND_ARCHITECTURE.md)

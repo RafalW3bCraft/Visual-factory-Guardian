@@ -1,43 +1,34 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import Landing from "./landing/Landing";
-const Demo = lazy(() => import("./App"));
-const isDemo = () =>
-  window.location.hash.startsWith("#/demo") ||
-  window.location.hash === "#experience";
-
+import { FactoryStory, InteractiveDemo } from "./experience/Experience";
+const Console = lazy(() => import("./App"));
+function route() {
+  return location.hash.startsWith("#/console") ||
+    location.hash === "#experience"
+    ? "console"
+    : location.hash.startsWith("#/demo")
+      ? "demo"
+      : "story";
+}
 export default function Site() {
-  const [demo, setDemo] = useState(isDemo);
+  const [page, setPage] = useState(route);
   useEffect(() => {
-    const update = () => setDemo(isDemo());
-    window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
+    const change = () => setPage(route());
+    window.addEventListener("hashchange", change);
+    return () => window.removeEventListener("hashchange", change);
   }, []);
   useEffect(() => {
-    if (demo) window.scrollTo(0, 0);
-    else {
-      const anchor = window.location.hash.slice(1);
-      if (anchor)
-        requestAnimationFrame(() =>
-          document.getElementById(anchor)?.scrollIntoView(),
-        );
-      else window.scrollTo(0, 0);
-    }
-    document.title = demo
-      ? "Guided simulation — Visual Factory Guardian"
-      : "Visual Factory Guardian — See the factory differently";
-  }, [demo]);
-  return demo ? (
+    window.scrollTo(0, 0);
+    document.title = `${page === "story" ? "Industrial intelligence in action" : page === "demo" ? "Interactive manufacturing demo" : "Simulation & backend console"} — Visual Factory Guardian`;
+  }, [page]);
+  return page === "console" ? (
     <Suspense
-      fallback={
-        <div className="demo-loading" role="status">
-          Opening the guided simulation…{" "}
-          <a href="#factory">Return to the factory</a>
-        </div>
-      }
+      fallback={<div className="demo-loading">Opening simulation console…</div>}
     >
-      <Demo />
+      <Console />
     </Suspense>
+  ) : page === "demo" ? (
+    <InteractiveDemo />
   ) : (
-    <Landing />
+    <FactoryStory />
   );
 }

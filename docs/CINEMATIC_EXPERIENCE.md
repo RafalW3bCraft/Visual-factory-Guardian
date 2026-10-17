@@ -1,5 +1,7 @@
 # The cinematic factory experience
 
+> Historical documentation of the previous photographic landing page. The active implementation is documented in [Factory Simulation 2.0](FACTORY_SIMULATION_2.md).
+
 ## Entry points and preserved behavior
 
 `/` is a six-chapter photographic introduction. `/#/demo` opens the existing React Three Fiber factory with its original playback, presentation, inspection, telemetry, local review and live API readiness workflow. `/#experience` remains a legacy alias for the demo. The demo header includes a return to the factory story. Browser back/forward follows native hash history. Chapter anchors are `#factory`, `#signals`, `#vision`, `#context`, `#understanding`, and `#next`.

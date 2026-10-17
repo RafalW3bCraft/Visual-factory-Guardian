@@ -4,7 +4,7 @@ test("factory, camera, evidence, replay and backend recovery", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/#/demo");
+  await page.goto("/#/console");
   await expect(page.locator("canvas")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Focus Vision station" }),
@@ -68,7 +68,7 @@ test("factory, camera, evidence, replay and backend recovery", async ({
 });
 test("presentation, reduced motion and visual scenes", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/#/demo");
+  await page.goto("/#/console");
   await expect(page.locator("canvas")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Play scenario" }),
@@ -119,7 +119,7 @@ test("responsive stage has no horizontal page overflow", async ({ page }) => {
     [320, 740],
   ]) {
     await page.setViewportSize({ width, height });
-    await page.goto("/#/demo");
+    await page.goto("/#/console");
     await expect(page.locator("canvas")).toBeVisible();
     expect(
       await page.evaluate(
@@ -155,7 +155,7 @@ test("WebGL unavailable retains all investigation controls", async ({
       return Reflect.apply(original, this, [kind, ...args]);
     } as typeof HTMLCanvasElement.prototype.getContext;
   });
-  await page.goto("/#/demo");
+  await page.goto("/#/console");
   await expect(page.getByText("SIMPLIFIED VISUALIZATION")).toBeVisible();
   await page.getByRole("button", { name: "Skip to evidence" }).click();
   await expect(page.getByText("Thermal process instability")).toBeVisible();
@@ -170,7 +170,7 @@ test("presentation fits projector viewports and exposes fullscreen control", asy
     [1920, 1080],
   ]) {
     await page.setViewportSize({ width, height });
-    await page.goto("/#/demo");
+    await page.goto("/#/console");
     // Navigating to the same fragment keeps the existing document and its state.
     await page.reload();
     await page.getByRole("button", { name: "Presentation mode" }).click();
@@ -210,7 +210,7 @@ test("automatic playback completes and replays without fatal console errors", as
   page.on("console", (m) => {
     if (m.type() === "error") errors.push(m.text());
   });
-  await page.goto("/#/demo");
+  await page.goto("/#/console");
   await page
     .getByRole("button", { name: "Launch investigation", exact: true })
     .click();

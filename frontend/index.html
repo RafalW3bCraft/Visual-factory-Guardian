@@ -3,109 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080a0c" />
+    <meta name="theme-color" content="#111b21" />
     <meta
       name="description"
-      content="Step inside an industrial intelligence prototype. Explore machine vision, synthetic sensor context and evidence-led engineering investigation."
+      content="Scroll to operate an articulated manufacturing cell. Inspect a synthetic anomaly, correlate sensor context and make an engineering decision in Visual Factory Guardian."
     />
-    <title>Visual Factory Guardian — See the factory differently</title>
+    <title>Industrial intelligence in action — Visual Factory Guardian</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link
-      rel="preload"
-      as="image"
-      href="/images/factory-mobile.webp"
-      media="(max-width: 600px)"
-      fetchpriority="high"
-    />
-    <link
-      rel="preload"
-      as="image"
-      href="/images/factory-1600.webp"
-      imagesrcset="/images/factory-960.webp 960w, /images/factory-1600.webp 1600w"
-      imagesizes="100vw"
-      media="(min-width: 601px)"
-      fetchpriority="high"
-    />
     <style>
       body {
         margin: 0;
-        background: #080a0c;
-        color: #f0f0ec;
+        background: #111b21;
+        color: #eceee8;
+        font-family: Arial, sans-serif;
       }
       .initial-scene {
-        height: 100svh;
-        min-height: 800px;
-        position: relative;
-        overflow: hidden;
+        padding: 15vh 8vw;
       }
-      .initial-scene img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: 64% 50%;
+      .initial-scene h1 {
+        font-size: clamp(36px, 6vw, 80px);
+        font-weight: 400;
+        letter-spacing: -0.04em;
       }
       .initial-scene p {
-        position: absolute;
-        left: 7%;
-        top: 35%;
-        font:
-          clamp(58px, 8vw, 120px)/0.95 Arial,
-          sans-serif;
-        letter-spacing: -0.07em;
-        text-shadow: 0 2px 40px #080a0c;
+        color: #bacad0;
       }
-      .initial-scene span {
+      noscript {
         display: block;
-        font-size: 14px;
-        letter-spacing: 0;
-        margin-top: 30px;
+        padding: 0 8vw 40px;
       }
-      @media (min-width: 768px) and (max-height: 800px) {
-        .initial-scene {
-          min-height: 720px;
-        }
-      }
-      @media (max-width: 767px) {
-        .initial-scene {
-          min-height: 760px;
-        }
+      noscript a {
+        color: #efb179;
       }
     </style>
   </head>
   <body>
     <div id="root">
       <div class="initial-scene">
-        <picture
-          ><source
-            media="(max-width: 600px)"
-            srcset="/images/factory-mobile.webp" />
-          <img
-            src="/images/factory-1600.webp"
-            srcset="
-              /images/factory-960.webp   960w,
-              /images/factory-1600.webp 1600w
-            "
-            sizes="100vw"
-            width="1600"
-            height="800"
-            alt="Generated industrial factory illustration"
-            fetchpriority="high"
-        /></picture>
+        <p>VISUAL FACTORY GUARDIAN / SIMULATED MANUFACTURING CELL</p>
+        <h1>Industrial intelligence.<br />In action.</h1>
         <p>
-          The factory<br />never stops.<span
-            >Visual Factory Guardian — loading the experience</span
-          >
+          Robot handling → conveyor transport → visual inspection → sensor
+          context → engineering review.
         </p>
       </div>
     </div>
     <noscript
-      ><p style="padding: 24px; font: 16px Arial">
-        Enable JavaScript to explore the six chapters and the guided simulation.
-        This hackathon prototype uses generated industrial illustrations and
-        synthetic telemetry.
-        <a
-          style="color: #ffad61"
-          href="https://github.com/RafalW3bCraft/Visual-factory-Guardian"
+      ><p>
+        Enable JavaScript to operate the factory simulation and explore the
+        interactive demo. Inspection evidence, telemetry and explanation are
+        synthetic fixtures. No live hardware or inference is claimed.
+        <a href="https://github.com/RafalW3bCraft/Visual-factory-Guardian"
           >Read the project documentation</a
         >.
       </p></noscript
