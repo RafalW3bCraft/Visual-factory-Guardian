@@ -1,34 +1,32 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { FactoryStory, InteractiveDemo } from "./experience/Experience";
+import Landing from "./cinematic/Landing";
 const Console = lazy(() => import("./App"));
-function route() {
-  return location.hash.startsWith("#/console") ||
+function isDemo() {
+  return (
+    location.pathname.replace(/\/$/, "") === "/dashboard" ||
+    /^#\/(demo|console)/.test(location.hash) ||
     location.hash === "#experience"
-    ? "console"
-    : location.hash.startsWith("#/demo")
-      ? "demo"
-      : "story";
+  );
 }
 export default function Site() {
-  const [page, setPage] = useState(route);
+  const [demo, setDemo] = useState(isDemo);
   useEffect(() => {
-    const change = () => setPage(route());
-    window.addEventListener("hashchange", change);
-    return () => window.removeEventListener("hashchange", change);
+    const update = () => setDemo(isDemo());
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
   }, []);
   useEffect(() => {
-    window.scrollTo(0, 0);
-    document.title = `${page === "story" ? "Industrial intelligence in action" : page === "demo" ? "Interactive manufacturing demo" : "Simulation & backend console"} — Visual Factory Guardian`;
-  }, [page]);
-  return page === "console" ? (
+    document.body.dataset.view = demo ? "demo" : "story";
+    if (demo || !location.hash.startsWith("#chapter-")) window.scrollTo(0, 0);
+    document.title = `${demo ? "Operator investigation" : "See the defect. Understand the signals."} — Visual Factory Guardian`;
+  }, [demo]);
+  return demo ? (
     <Suspense
-      fallback={<div className="demo-loading">Opening simulation console…</div>}
+      fallback={<div className="demo-loading">Opening investigation…</div>}
     >
       <Console />
     </Suspense>
-  ) : page === "demo" ? (
-    <InteractiveDemo />
   ) : (
-    <FactoryStory />
+    <Landing />
   );
 }

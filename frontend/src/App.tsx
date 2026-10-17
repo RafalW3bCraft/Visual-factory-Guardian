@@ -257,7 +257,7 @@ export default function App() {
         <div className="header-actions">
           <a
             className="back-to-film"
-            href="#factory"
+            href={location.pathname === "/dashboard" ? "/" : "#chapter-1"}
             aria-label="Return to the factory story"
           >
             ← <span>Factory story</span>

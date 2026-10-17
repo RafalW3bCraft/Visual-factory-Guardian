@@ -1,5 +1,8 @@
 # Simulation 2.0 — executed verification
 
+> Historical record of local commit `2397ecb`. The current user-approved design restores the video reference; see [Refined factory story](REFINED_FACTORY_STORY.md). Counts and screenshots below describe the earlier implementation.
+
+
 Date: 18 October 2026 (Asia/Almaty).
 
 ## Workspace and delivery

@@ -31,3 +31,21 @@ body {
     display: none;
   }
 }
+
+body[data-view="demo"] {
+  background: #080b10;
+  color: #f0f3f5;
+}
+body[data-view="story"] {
+  background: #f0eee8;
+  color: #20272b;
+}
+.app {
+  color: #f0f3f5;
+  font-family: "DM Sans", sans-serif;
+  min-height: 100svh;
+}
+.demo-loading {
+  background: #080b10;
+  color: #f0f3f5;
+}

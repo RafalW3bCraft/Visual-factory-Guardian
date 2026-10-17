@@ -1,5 +1,8 @@
 # Factory simulation 2.0
 
+> Historical record of local commit `2397ecb`. The current user-approved design restores the video reference; see [Refined factory story](REFINED_FACTORY_STORY.md). Counts and screenshots below describe the earlier implementation.
+
+
 ## Entry points and product truth
 
 - `/`: one native sticky, reversible manufacturing scene. Eight stages share the same cell, component and camera.

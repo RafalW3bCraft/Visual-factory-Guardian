@@ -4,16 +4,16 @@
 
 Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
 
-> **Project status:** A scroll-controlled articulated manufacturing cell and interactive operator demo are implemented in `frontend/`. The same deterministic 56-second timeline drives robotic handling, conveyor transport, inspection, sensor context and review. Inspection scores, telemetry and explanations are explicitly synthetic. The existing simulation, presentation mode and backend readiness workflow remain accessible at `/#/console`.
+> **Project status:** The ivory cinematic landing and dark investigation workspace have been restored to the approved video reference. Seven scroll chapters share a refined production cell with real flange bores, beveled sheet metal, a vented cover, viewing glass, cabling and studio lighting. Inspection scores, telemetry and explanations are explicitly synthetic.
 
-## Interactive factory simulation 2.0
+## Cinematic factory investigation
 
-Open `/` and scroll to operate the cell. Scroll backward to reverse it; stop to hold the exact pose. Keyboard stage buttons and the step-control option provide direct access. Reduced-motion users receive step controls and a fixed camera. At the final stage, **Enter interactive demo** transfers the current scenario time to `/#/demo`.
+Open `/` and scroll through a component journey, visual inspection, the machine's internal assembly and event-linked sensor evidence. Scroll backward to reverse the narrative, or use the seven keyboard-accessible chapter links. **Pause motion** stops ambient conveyor movement; reduced-motion preferences use discrete camera compositions.
 
-The demo supports start/pause/resume/restart, timeline seeking, equipment selection, inspection tracking, magnified surface evidence, three sensor trends, a traceable explanation, and confirm/reject/reinspection decisions with session history. Decisions are local and create no external work orders. The original console and real API integration are preserved behind **Existing simulation & backend console**.
+**Demo mode** opens `/#/demo`: the restored dark investigation workspace with playback, timeline seeking, equipment focus, product inspection, three sensor trends, evidence, a local demo review and Presentation mode. `/#/console`, `/dashboard` and `#experience` remain compatible entry points to that workspace. **Factory story** returns to the landing.
 
-- [Simulation architecture, timeline, asset sources and limitations](docs/FACTORY_SIMULATION_2.md)
-- [Executed verification and review instructions](docs/SIMULATION_2_VERIFICATION.md)
+- [Reference restoration, implementation and verification](docs/REFINED_FACTORY_STORY.md)
+- [Earlier robotic simulation (historical)](docs/FACTORY_SIMULATION_2.md)
 - [Previous photographic introduction (historical)](docs/CINEMATIC_EXPERIENCE.md)
 
 ## Run the interactive factory
@@ -32,7 +32,7 @@ The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for
 
 Verification commands: `npm test`, `npm run build`, `npm run format:check`, and `npm run test:e2e`. For browser tests, install Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. Playwright starts the production preview on port 4173.
 
-Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. The demo geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The current landing uses the same procedural scene as the new demo. Earlier generated imagery remains in the repository but is not downloaded by this experience. Repository code is MIT; see `LICENSE`.
+Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. The demo geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The landing and dark demo share the same procedural machinery and lighting. Barlow Condensed and DM Sans are bundled locally with their OFL licenses in `frontend/public/licenses/`; GSAP drives the scroll narrative. Earlier generated imagery remains in the repository but is not downloaded by this experience. Repository code is MIT; see `LICENSE`.
 
 - [Implementation audit](docs/FRONTEND_IMPLEMENTATION_AUDIT.md)
 - [Frontend architecture and limitations](docs/FRONTEND_ARCHITECTURE.md)
