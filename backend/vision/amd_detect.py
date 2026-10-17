@@ -69,7 +69,7 @@ def _run_lspci() -> str:
         return subprocess.run(
             ["lspci", "-mm"], capture_output=True, text=True, timeout=5, check=False
         ).stdout
-    except (FileNotFoundError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError):
         return ""
 
 
@@ -83,11 +83,16 @@ def _dri_render_nodes() -> list[Path]:
 def detect_amd_gpu() -> list[PciDevice]:
     """Return the list of AMD/ATI PCI devices on this host."""
     raw_mm = _run_lspci()
-    devices = _parse_lspci(raw_mm) if raw_mm else _parse_lspci(
-        subprocess.run(
-            ["lspci"], capture_output=True, text=True, timeout=5, check=False
-        ).stdout
-    )
+    try:
+        devices = _parse_lspci(raw_mm) if raw_mm else _parse_lspci(
+            subprocess.run(
+                ["lspci"], capture_output=True, text=True, timeout=5, check=False
+            ).stdout
+        )
+    except (OSError, subprocess.SubprocessError):
+        # lspci is optional (and normally absent on macOS/Windows).
+        # An unavailable probe must not prevent the CPU/synthetic API starting.
+        return []
     return [d for d in devices if d.is_amd]
 
 

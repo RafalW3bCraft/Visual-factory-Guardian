@@ -127,3 +127,22 @@ def test_recommended_backend_is_anomalib_when_torch_rocm_available(monkeypatch) 
         ),
     )
     assert fake.recommended_backend == "anomalib"
+
+
+def test_missing_lspci_does_not_block_backend_startup(monkeypatch) -> None:
+    def unavailable(*args, **kwargs):
+        raise FileNotFoundError("lspci")
+
+    monkeypatch.setattr("backend.vision.amd_detect.subprocess.run", unavailable)
+    assert detect_amd_gpu() == []
+    assert summary().amd_gpus == []
+
+
+def test_fallback_lspci_timeout_returns_no_hardware(monkeypatch) -> None:
+    import subprocess
+
+    monkeypatch.setattr("backend.vision.amd_detect._run_lspci", lambda: "")
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired("lspci", 5)
+    monkeypatch.setattr("backend.vision.amd_detect.subprocess.run", timeout)
+    assert detect_amd_gpu() == []
