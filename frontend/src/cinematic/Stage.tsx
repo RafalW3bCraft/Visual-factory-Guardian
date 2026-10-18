@@ -7,6 +7,10 @@ import {
   type RefObject,
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { AdaptiveDpr } from "@react-three/drei";
+import { PerspectiveCamera, Vector3, Color } from "three";
+import Machinery from "./Machinery";
+import Lighting from "./Lighting";
 import { Environment, Lightformer, AdaptiveDpr } from "@react-three/drei";
 import { PerspectiveCamera, Vector3, Color } from "three";
 import Machinery from "./Machinery";
@@ -152,6 +156,7 @@ export default function Stage({
           );
         }}
       >
+        <Lighting />
         <ambientLight intensity={0.65} />
         <hemisphereLight args={["#eff6ff", "#6e6658", 1.5]} />
         <directionalLight

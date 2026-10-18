@@ -1,5 +1,10 @@
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import Site from "./Site";
+import "./base.css";
+createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Site />
 const dashboard = window.location.pathname.replace(/\/$/, "") === "/dashboard";
 const Experience = dashboard
   ? lazy(async () => {

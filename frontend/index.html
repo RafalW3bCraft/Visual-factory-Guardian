@@ -3,16 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080b10" />
+    <meta name="theme-color" content="#f0eee8" />
     <meta
       name="description"
-      content="Explore a 3D production line and connect visual anomalies with simulated machine telemetry in an evidence-driven investigation."
+      content="Explore an industrial investigation: follow a component, inspect a potential defect, and connect machine signals in Visual Factory Guardian."
     />
-    <title>Visual Factory Guardian — Every defect has a story</title>
+    <title>
+      See the defect. Understand the signals. — Visual Factory Guardian
+    </title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      body {
+        margin: 0;
+        background: #f0eee8;
+        color: #20272b;
+        font-family: Arial, sans-serif;
+      }
+      .initial-scene {
+        padding: 15vh 8vw;
+      }
+      .initial-scene h1 {
+        font-size: clamp(36px, 6vw, 80px);
+        font-weight: 400;
+        letter-spacing: -0.04em;
+      }
+      .initial-scene p {
+        color: #535d60;
+      }
+      noscript {
+        display: block;
+        padding: 0 8vw 40px;
+      }
+      noscript a {
+        color: #ad4616;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="initial-scene">
+        <p>VISUAL FACTORY GUARDIAN / SIMULATED MANUFACTURING CELL</p>
+        <h1>Every defect<br />has a story.</h1>
+        <p>
+          Component transport → visual inspection → machine signals → sensor
+          context → engineering review.
+        </p>
+      </div>
+    </div>
+    <noscript
+      ><p>
+        Enable JavaScript to operate the factory simulation and explore the
+        interactive demo. Inspection evidence, telemetry and explanation are
+        synthetic fixtures. No live hardware or inference is claimed.
+        <a href="https://github.com/RafalW3bCraft/Visual-factory-Guardian"
+          >Read the project documentation</a
+        >.
+      </p></noscript
+    >
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

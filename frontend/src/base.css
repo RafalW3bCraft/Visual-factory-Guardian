@@ -1,0 +1,51 @@
+:root {
+  color: #f0f0ec;
+  background: #080a0c;
+  font-family: Arial, Helvetica, sans-serif;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.demo-loading {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.demo-loading a {
+  color: #ffad61;
+}
+.back-to-film {
+  font-size: 11px;
+  padding: 12px 4px;
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .back-to-film span {
+    display: none;
+  }
+}
+
+body[data-view="demo"] {
+  background: #080b10;
+  color: #f0f3f5;
+}
+body[data-view="story"] {
+  background: #f0eee8;
+  color: #20272b;
+}
+.app {
+  color: #f0f3f5;
+  font-family: "DM Sans", sans-serif;
+  min-height: 100svh;
+}
+.demo-loading {
+  background: #080b10;
+  color: #f0f3f5;
+}
