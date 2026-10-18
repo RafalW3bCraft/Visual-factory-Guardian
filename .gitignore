@@ -11,6 +11,9 @@ __pycache__/
 .coverage
 htmlcov/
 
+# Demo runner artifacts
+sample_analysis_output.json
+
 # Editor / OS
 .DS_Store
 *.tsbuildinfo

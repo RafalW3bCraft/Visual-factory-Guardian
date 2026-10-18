@@ -4,6 +4,7 @@ test("WCAG A/AA automated checks for overview, evidence and backend error", asyn
   page,
 }) => {
   await page.goto("/#/console");
+  await page.goto("/dashboard");
   await page.getByRole("button", { name: "Pause scenario" }).click();
   for (const scene of [0, 5]) {
     await page

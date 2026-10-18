@@ -1,0 +1,32 @@
+{
+  "measuredAt": "2026-10-16T04:54:32.912Z",
+  "browser": "155.0.8059.82",
+  "reports": [
+    {
+      "width": 1440,
+      "height": 900,
+      "elapsedMs": 6007,
+      "renderedFrames": 361,
+      "renderedFps": 60.1,
+      "rafMedianMs": 16.7,
+      "rafP95Ms": 16.7,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+      "peakObservedDrawCalls": 186,
+      "peakObservedTriangles": 48058,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "elapsedMs": 6015,
+      "renderedFrames": 361,
+      "renderedFps": 60,
+      "rafMedianMs": 16.7,
+      "rafP95Ms": 16.7,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+      "peakObservedDrawCalls": 186,
+      "peakObservedTriangles": 48058,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    }
+  ]
+}

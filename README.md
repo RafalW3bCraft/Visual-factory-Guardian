@@ -15,6 +15,7 @@ Open `/` and scroll through a component journey, visual inspection, the machine'
 - [Reference restoration, implementation and verification](docs/REFINED_FACTORY_STORY.md)
 - [Earlier robotic simulation (historical)](docs/FACTORY_SIMULATION_2.md)
 - [Previous photographic introduction (historical)](docs/CINEMATIC_EXPERIENCE.md)
+| **Project status:** The seven-chapter cinematic landing page and interactive guided investigation are implemented in `frontend/`. The Python vision, telemetry, statistical evidence, manual retrieval and reasoning layers are integrated into the FastAPI service. The single active `GET /api/v1/analysis/{event_id}` endpoint is now backed by `backend.reasoning.service.ReasoningService`; candidate causes, manual citations, recommended action and explanation are produced by that service and adapted to the frontend Zod schema by `backend.api.analysis_adapter`. The synthetic maintenance manual ships with the repository and is cited as a demonstration manual — never as an industry-certified operating instruction. AMD inference: the OpenAI-compatible LLM hook is wired and unit-tested with a mock server; a real call against the AMD TokenFactory API requires an account-specific endpoint URL and API key, which were not configured in this environment — see `docs/AMD_LLM_INTEGRATION.md` for the exact status. |
 
 ## Run the interactive factory
 
@@ -27,13 +28,19 @@ npm run dev
 Open the local URL printed by Vite. For a production build, run `npm run build`, then `npm run preview -- --port 4173`. Use Node 22.12+ (or a supported newer LTS). The implementation was tested with Node 25.8.1; see the test report for the complete environment.
 
 The React/TypeScript/Vite frontend uses Three.js, React Three Fiber and Drei for the procedural factory. The following original console features remain available at `/#/console`: Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
+Open `/` for the continuous seven-chapter scroll story, or `/dashboard` for the existing operator investigation application. The landing uses one persistent React Three Fiber Canvas and GSAP ScrollTrigger to synchronize camera travel, product inspection, machine disassembly, sensor evidence and reassembly. It is a bundled guided simulation and needs no backend.
+
+The React/TypeScript/Vite dashboard uses Three.js, React Three Fiber and Drei for a real procedural factory. Orbit and focus machinery, compare synthetic product inspections, scrub temperature/vibration/current, inspect event-linked evidence, and record a local demo review. Nine scenes and keyboard-accessible Presentation mode support a short judge walkthrough. Replay resets one deterministic 56-second scenario.
 
 **Guided Simulation** is bundled and needs no backend after loading. Every score, signal and product illustration is explicitly synthetic. **Live Analysis** is a separate workspace that stays gated until a configured API passes its readiness check. It validates server records and never replaces errors with fixtures. Configure the public `VITE_API_BASE_URL` via `frontend/.env.example`; never place credentials in a Vite environment variable.
 
 Verification commands: `npm test`, `npm run build`, `npm run format:check`, and `npm run test:e2e`. For browser tests, install Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. Playwright starts the production preview on port 4173.
 
 Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. The demo geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The landing and dark demo share the same procedural machinery and lighting. Barlow Condensed and DM Sans are bundled locally with their OFL licenses in `frontend/public/licenses/`; GSAP drives the scroll narrative. Earlier generated imagery remains in the repository but is not downloaded by this experience. Repository code is MIT; see `LICENSE`.
+Modern WebGL2 browsers receive the interactive scene; unsupported WebGL receives a textual process diagram with the investigation controls intact. Reduced-motion and mobile layouts are supported. All geometry/illustrations are original procedural assets; no dataset or third-party 3D asset is redistributed. The repository is MIT-licensed. The cinematic landing bundles Barlow Condensed and DM Sans under the SIL Open Font License; copies ship in `frontend/public/licenses/`.
 
+- [Cinematic design and reference study](docs/CINEMATIC_DESIGN.md)
+- [Cinematic verification and performance](docs/CINEMATIC_VERIFICATION.md)
 - [Implementation audit](docs/FRONTEND_IMPLEMENTATION_AUDIT.md)
 - [Frontend architecture and limitations](docs/FRONTEND_ARCHITECTURE.md)
 - [Deterministic scenario and controls](docs/INTERACTIVE_DEMO.md)
@@ -510,8 +517,21 @@ Example scores are illustrative and must not be presented as measured results or
 * An **event-alignment** layer and a **sensor evidence builder** that
   compute rolling baselines, threshold breaches, drift lead/lag, and a
   deterministic evidence-grounded explanation.
-* **77 tests** (unit + integration + live-uvicorn smoke) that pass in
-  ~4 seconds on CPU.
+* The **reasoning layer** (`backend.reasoning/`) — the statistical
+  `RootCauseEngine`, the BM25-based maintenance-manual retriever, and the
+  `Explainer` that combines them. The live API calls `ReasoningService`
+  for `GET /api/v1/analysis/{event_id}`; an analysis adapter
+  (`backend.api.analysis_adapter`) maps the rich service output to the
+  narrow frontend schema and filters the live sensor stream to the
+  scenario, line and pre-event window so the engine cannot peek into
+  the future.
+* An **optional AMD-hosted LLM hook** (`backend.reasoning.llm_client`)
+  that speaks the OpenAI-compatible `POST /chat/completions` protocol.
+  Configured via `VFG_LLM_ENDPOINT` / `VFG_LLM_MODEL` / `VFG_LLM_API_KEY`,
+  it is the integration path for the AMD TokenFactory chat-completions
+  API. See `docs/AMD_LLM_INTEGRATION.md` for the verified wire-format
+  contract and the exact credentials needed for a real call.
+* **106 tests** (unit + integration + smoke) that pass in ~7 seconds on CPU.
 
 ### Setup (CPU — works everywhere)
 
@@ -671,11 +691,19 @@ LICENSE                        # MIT, Copyright (c) 2026 RafalW3bCraft
 
 * **Frontend adapter:** the response shapes match `frontend/src/services/api.ts`
   byte-for-byte; `VITE_API_BASE_URL=https://<host>` is all that's needed.
-* **Root-cause / LLM:** consume `GET /api/v1/analysis/{event_id}` for the
-  full `Analysis` payload (sensor evidence + candidate causes +
-  explanation + recommended action). Add a new `llm_explanation`
-  field if you want to replace the deterministic explanation; do not
-  edit the existing `explanation` in place.
+* **Root-cause / LLM:** `GET /api/v1/analysis/{event_id}` is now served by
+  `backend.api.analysis_adapter.build_analysis_payload`, which calls
+  `backend.reasoning.service.ReasoningService` and adapts the rich service
+  output to the documented `Analysis` schema (evidence ids, candidate
+  causes, manual citations with title/reference/excerpt, advisory-only
+  recommended action). There is exactly one active GET handler for that
+  route; the alternative router in `backend/api/analysis_router.py` is not
+  mounted in the live app. The AMD LLM hook is the
+  OpenAI-compatible `LLMClient` configured via `VFG_LLM_ENDPOINT` /
+  `VFG_LLM_MODEL` / `VFG_LLM_API_KEY`; the explainer only **verbalises**
+  the structured evidence — the ranking stays with the statistical engine.
+  See `docs/AMD_LLM_INTEGRATION.md` for the verified wire format and the
+  exact credentials required for a real AMD TokenFactory call.
 * **AMD validation:** when real hardware is available, run
   `scripts/benchmark_amd.py` and paste the JSON output into the
   template at `docs/AMD_SETUP.md`. Do not copy results from another

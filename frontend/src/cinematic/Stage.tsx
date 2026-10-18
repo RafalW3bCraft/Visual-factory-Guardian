@@ -11,6 +11,9 @@ import { AdaptiveDpr } from "@react-three/drei";
 import { PerspectiveCamera, Vector3, Color } from "three";
 import Machinery from "./Machinery";
 import Lighting from "./Lighting";
+import { Environment, Lightformer, AdaptiveDpr } from "@react-three/drei";
+import { PerspectiveCamera, Vector3, Color } from "three";
+import Machinery from "./Machinery";
 import { storyState, type StoryClock } from "./director";
 
 function CameraDirector({ clock }: { clock: RefObject<StoryClock> }) {
@@ -154,6 +157,34 @@ export default function Stage({
         }}
       >
         <Lighting />
+        <ambientLight intensity={0.65} />
+        <hemisphereLight args={["#eff6ff", "#6e6658", 1.5]} />
+        <directionalLight
+          position={[2, 10, 7]}
+          intensity={3.1}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+          shadow-camera-left={-9}
+          shadow-camera-right={9}
+          shadow-camera-top={8}
+          shadow-camera-bottom={-8}
+          shadow-normalBias={0.035}
+        />
+        <directionalLight
+          position={[-7, 6, -3]}
+          intensity={2.5}
+          color="#a8c6da"
+        />
+        <Environment resolution={128} frames={1}>
+          <Lightformer position={[0, 7, -4]} scale={[12, 5, 1]} intensity={3} />
+          <Lightformer position={[5, 3, 4]} scale={[5, 7, 1]} intensity={2} />
+          <Lightformer
+            position={[-5, 2, 0]}
+            rotation={[0, Math.PI / 2, 0]}
+            scale={[6, 4, 1]}
+            intensity={2}
+          />
+        </Environment>
         <Machinery clock={clock} />
         <CameraDirector clock={clock} />
         <AdaptiveDpr pixelated />

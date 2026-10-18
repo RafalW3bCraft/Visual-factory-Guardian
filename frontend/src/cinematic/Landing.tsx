@@ -229,6 +229,8 @@ function Annotation({ chapter }: { chapter: number }) {
           View GitHub <span aria-hidden="true">↗</span>
         </a>
         <a href="#/demo">
+
+        <a href="/dashboard">
           Open Dashboard <span aria-hidden="true">→</span>
         </a>
       </div>
@@ -349,6 +351,8 @@ export default function Landing() {
         </span>
         <a className="cinema-project-link" href="#/demo">
           Demo mode <span>↗</span>
+        <a className="cinema-project-link" href="/dashboard">
+          Open investigation <span>↗</span>
         </a>
       </header>
       <div className="cinema-stage">

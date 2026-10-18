@@ -61,6 +61,15 @@ export class GuardianApi {
   constructor(
     base: string,
     private fetcher: typeof fetch = fetch,
+    /**
+     * Per-request HTTP timeout in milliseconds. Most endpoints are fast
+     * (sub-second) and use the default 8 s ceiling. The analysis endpoint
+     * can involve a remote LLM call that legitimately takes longer, so we
+     * expose a separate timeout for that call only. Both are still bounded
+     * so a hung backend does not stall the operator UI indefinitely.
+     */
+    private timeoutMs: number = 8000,
+    private analysisTimeoutMs: number = 30000,
   ) {
     if (!base)
       throw new Error(
@@ -77,9 +86,11 @@ export class GuardianApi {
     method = "GET",
     body?: unknown,
     signal?: AbortSignal,
+    timeoutMs?: number,
   ): Promise<T> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    const ms = timeoutMs ?? this.timeoutMs;
+    const timer = setTimeout(() => controller.abort(), ms);
     const abort = () => controller.abort();
     signal?.addEventListener("abort", abort, { once: true });
     if (signal?.aborted) controller.abort();
@@ -164,6 +175,10 @@ export class GuardianApi {
       "GET",
       undefined,
       signal,
+      // Allow the analysis call more wall-clock time than the default 8 s
+      // ceiling. A remote LLM explanation is the legitimate slow path;
+      // 30 s is still bounded so a hung backend does not stall the UI.
+      this.analysisTimeoutMs,
     ).then((data) => {
       if (
         data.event_id !== event.event_id ||
