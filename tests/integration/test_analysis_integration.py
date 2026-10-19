@@ -40,7 +40,7 @@ def _client():
 def test_analysis_for_anomalous_event_returns_full_reasoning_output() -> None:
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        r = client.get("/api/v1/analysis/evt-004")
+        r = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001")
         assert r.status_code == 200
         body = r.json()
         # Required keys per the frontend Zod schema
@@ -63,7 +63,7 @@ def test_analysis_for_anomalous_event_returns_full_reasoning_output() -> None:
 def test_analysis_normal_event_action_can_be_none_and_explanation_mentions_pre_drift() -> None:
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        r = client.get("/api/v1/analysis/evt-001")
+        r = client.get("/api/v1/analysis/evt-001?scenario_id=thermal-drift-001")
         assert r.status_code == 200
         body = r.json()
         # evt-001 happens before the fault starts, so the explanation must
@@ -83,7 +83,7 @@ def test_analysis_normal_event_action_can_be_none_and_explanation_mentions_pre_d
 def test_analysis_evidence_ids_are_unique_and_match_candidate_references() -> None:
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        r = client.get("/api/v1/analysis/evt-004")
+        r = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001")
         body = r.json()
         ev_ids = [e["evidence_id"] for e in body["sensor_evidence"]]
         assert len(ev_ids) == len(set(ev_ids))
@@ -99,10 +99,10 @@ def test_analysis_evidence_ids_stable_across_replays() -> None:
     """The mapping sensor_id -> evidence_id is deterministic across runs."""
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        a = client.get("/api/v1/analysis/evt-004").json()
+        a = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001").json()
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        b = client.get("/api/v1/analysis/evt-004").json()
+        b = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001").json()
     assert [e["evidence_id"] for e in a["sensor_evidence"]] == [
         e["evidence_id"] for e in b["sensor_evidence"]
     ]
@@ -114,7 +114,7 @@ def test_analysis_evidence_ids_stable_across_replays() -> None:
 def test_manual_citations_carry_title_reference_and_excerpt() -> None:
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        r = client.get("/api/v1/analysis/evt-004")
+        r = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001")
         body = r.json()
         assert body["manual_citations"], "expected at least one manual citation"
         for m in body["manual_citations"]:
@@ -224,7 +224,7 @@ def test_analysis_response_reflects_engine_ranking_not_hardcoded_labels() -> Non
     try:
         with _client() as client:
             client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-            r = client.get("/api/v1/analysis/evt-004")
+            r = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001")
             assert r.status_code == 200
             body = r.json()
             assert captured["called"] >= 1
@@ -267,7 +267,7 @@ def test_modifying_future_readings_does_not_change_past_event_result() -> None:
     try:
         with TestClient(create_app()) as c:
             c.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-            r1 = c.get("/api/v1/analysis/evt-001").json()
+            r1 = c.get("/api/v1/analysis/evt-001?scenario_id=thermal-drift-001").json()
             # The adapter must filter to ts <= event ts. evt-001 is at 8s,
             # so readings with ts > 8s should be excluded from the analysis.
             for rd in captured["readings"]:

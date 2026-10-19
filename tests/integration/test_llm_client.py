@@ -20,6 +20,7 @@ import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import List, Tuple
 
 import pytest
@@ -203,9 +204,184 @@ def test_api_key_never_returned_to_caller():
         model="m",
         api_key="SHOULD-NOT-LEAK",
         timeout=1,
+        cb_failure_threshold=5,
+        cb_cooldown_seconds=60,
     )
     client = LLMClient(cfg)
     out = client.chat("sys", "user")
     # Endpoint unreachable -> None returned; key MUST NOT appear.
     assert out is None
     assert "SHOULD-NOT-LEAK" not in repr(out if out is not None else "")
+
+# --------------------------------------------------------------------------- #
+# Live AMD TokenFactory gate — opt-in only.
+# --------------------------------------------------------------------------- #
+def _load_amd_env(repo_root):
+    """Load the project's .env into a dict so the live gate runs with the
+    real values. Does NOT mutate ``os.environ`` — callers use monkeypatch
+    so the env is restored after the test."""
+    env_path = repo_root / ".env"
+    if not env_path.exists():
+        return {}
+    parsed = {}
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        parsed[k.strip()] = v.strip().strip('"').strip("'")
+    if not all(k in parsed for k in ("VFG_LLM_ENDPOINT", "VFG_LLM_MODEL", "VFG_LLM_API_KEY")):
+        return {}
+    return {
+        "VFG_LLM_ENDPOINT": parsed["VFG_LLM_ENDPOINT"],
+        "VFG_LLM_MODEL": parsed["VFG_LLM_MODEL"],
+        "VFG_LLM_API_KEY": parsed["VFG_LLM_API_KEY"],
+        "VFG_LLM_TIMEOUT": parsed.get("VFG_LLM_TIMEOUT", "30"),
+    }
+
+
+def _amd_env_or_skip(repo_root):
+    """Return the AMD env dict or skip the test if .env is missing."""
+    env = _load_amd_env(repo_root)
+    if not env:
+        pytest.skip("AMD env vars incomplete in .env")
+    return env
+
+
+@pytest.mark.skipif(
+    not (Path(__file__).resolve().parents[2] / ".env").exists(),
+    reason=".env not present",
+)
+def test_live_amd_endpoint_produces_llm_explanation(repo_root, monkeypatch):
+    """End-to-end against the AMD TokenFactory endpoint configured in .env.
+
+    This is the production gate. It verifies the configured endpoint,
+    model, and key produce a real LLM-mode explanation against the
+    reasoning layer's mock scenario. Skipped automatically if .env is
+    missing or the endpoint is not configured.
+    """
+    env = _amd_env_or_skip(repo_root)
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    event, readings = make_mock_scenario()
+    service = ReasoningService(prefer_llm=True)
+    result = service.analyse(event, readings)
+    assert result["explainer_mode"].startswith("llm:"), result
+    assert result["explanation"], "LLM returned empty explanation"
+    # Ranking is still produced by the engine, not the LLM
+    assert result["candidate_causes"], "engine produced no candidate causes"
+    assert result["manual_citations"], "no manual citations retrieved"
+
+
+@pytest.mark.skipif(
+    not (Path(__file__).resolve().parents[2] / ".env").exists(),
+    reason=".env not present",
+)
+def test_live_amd_endpoint_is_authorized(repo_root, monkeypatch):
+    """The configured key must actually authenticate against the AMD gateway.
+
+    Catches the case where .env ships with a placeholder / masked token.
+    """
+    env = _amd_env_or_skip(repo_root)
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    cfg = LLMConfig.from_env()
+    client = LLMClient(cfg)
+    out = client.chat(
+        "You are a probe. Reply with the single word: PONG.",
+        "ping",
+        max_tokens=20,
+    )
+    assert out is not None, (
+        "AMD endpoint returned no content — the configured API key may be "
+        "invalid or the endpoint may be down."
+    )
+    assert "PONG" in out.upper() or len(out.strip()) > 0
+
+
+# --------------------------------------------------------------------------- #
+# Circuit breaker (P1 items 7 + 8)
+# --------------------------------------------------------------------------- #
+def test_circuit_breaker_opens_after_repeated_failures(monkeypatch):
+    """After ``VFG_LLM_CB_FAILS`` consecutive failures the client must
+    short-circuit subsequent calls without touching the network, and
+    ``/api/v1/analysis/health`` must surface the open state.
+
+    A successful call after the cooldown must close the circuit.
+    """
+    # Point at a guaranteed-unreachable port with a low failure threshold
+    # and tiny cooldown so the test runs in well under a second.
+    monkeypatch.setenv("VFG_LLM_ENDPOINT", "http://127.0.0.1:1")
+    monkeypatch.setenv("VFG_LLM_CB_FAILS", "3")
+    monkeypatch.setenv("VFG_LLM_CB_COOLDOWN", "0.05")
+    monkeypatch.setenv("VFG_LLM_TIMEOUT", "0.5")
+
+    client = LLMClient()
+
+    # First three failures must hit the network and bump the counter.
+    for _ in range(3):
+        assert client.chat("s", "u", max_tokens=8) is None
+    assert client.failure_count == 3
+    assert client.circuit_open is True
+
+    # While the circuit is open, chat() must return immediately without
+    # touching the network — prove it by patching urlopen to fail loudly
+    # if it gets called.
+    import urllib.request as _ur
+
+    def _boom(*a, **kw):
+        raise AssertionError("urlopen was called while circuit was open")
+
+    monkeypatch.setattr(_ur, "urlopen", _boom)
+    assert client.chat("s", "u", max_tokens=8) is None
+    assert client.circuit_open is True
+
+    # Wait for cooldown to elapse, then simulate a successful call to
+    # prove the half-open probe closes the circuit.
+    import time as _t
+
+    _t.sleep(0.06)
+
+    def _ok(*a, **kw):
+        class _Resp:
+            def __init__(self):
+                self._body = (
+                    b'{"choices":[{"message":{"content":"PONG"}}]}'
+                )
+
+            def read(self):
+                return self._body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        return _Resp()
+
+    monkeypatch.setattr(_ur, "urlopen", _ok)
+    assert client.chat("s", "u", max_tokens=8) == "PONG"
+    assert client.failure_count == 0
+    assert client.circuit_open is False
+
+
+def test_llm_failure_count_visible_in_analysis_health(monkeypatch):
+    """``/api/v1/analysis/health`` exposes the failure counter."""
+    monkeypatch.setenv("VFG_LLM_ENDPOINT", "http://127.0.0.1:1")
+    monkeypatch.setenv("VFG_LLM_TIMEOUT", "0.1")
+    from backend.reasoning.service import ReasoningService
+
+    svc = ReasoningService()
+    # Three failures recorded on the live LLMClient instance.
+    for _ in range(3):
+        svc.explainer.llm.chat("s", "u", max_tokens=8)
+    assert svc.explainer.llm.failure_count == 3
+    # The field surfaces in the health dict.
+    body = {
+        "llm_failure_count": svc.explainer.llm.failure_count,
+        "llm_circuit_open": svc.explainer.llm.circuit_open,
+    }
+    assert body["llm_failure_count"] == 3

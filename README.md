@@ -2,7 +2,7 @@
 
 **Evidence-driven industrial anomaly detection on AMD infrastructure**
 
-Visual Factory Guardian is a hackathon prototype for helping production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence.
+Visual Factory Guardian is an evidence-driven industrial anomaly-detection service that helps production-line operators identify suspicious products, inspect related machine telemetry, and investigate plausible contributing factors with traceable evidence. The system runs as a FastAPI backend plus a React/Three.js operator dashboard, with optional AMD ROCm and AMD-hosted LLM inference.
 
 > **Project status:** The ivory cinematic landing and dark investigation workspace have been restored to the approved video reference. Seven scroll chapters share a refined production cell with real flange bores, beveled sheet metal, a vented cover, viewing glass, cabling and studio lighting. Inspection scores, telemetry and explanations are explicitly synthetic.
 
