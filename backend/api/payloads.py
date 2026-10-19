@@ -30,8 +30,23 @@ def event_to_payload(
     """Build an inspection event dict matching the frontend's ``eventSchema``."""
     ts = scenario.epoch_utc + timedelta(seconds=inspection_seconds)
     detection = vision.detection.to_dict()
-    # The frontend schema's source enum is closed: pick the closest match.
-    source = vision.source if vision.source in {"public_dataset", "simulated", "real", "recorded"} else "simulated"
+    # The frontend schema's source enum is closed. If a backend ever emits
+    # something outside the four documented values, log it loudly and fall
+    # back to ``simulated`` — which is what we previously did silently and
+    # what masked a class of upstream bugs (an unknown source is data
+    # drift, not a synonym for ``simulated``).
+    _ALLOWED_SOURCES = {"public_dataset", "simulated", "real", "recorded"}
+    source = vision.source
+    if source not in _ALLOWED_SOURCES:
+        import logging as _logging
+
+        _logging.getLogger("vfg.api").warning(
+            "Vision backend emitted unknown source=%r for event_id=%s; "
+            "falling back to 'simulated'",
+            source,
+            event_id,
+        )
+        source = "simulated"
     return {
         "schema_version": "1.0",
         "event_id": event_id,

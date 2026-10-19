@@ -13,8 +13,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class HealthResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    status: Literal["ok"]
+    status: Literal["ok", "degraded", "unready"]
     capabilities: list[str]
+    # Real readiness — false when init failed or a dependency is unreachable.
+    # These fields are non-breaking additions (clients that only read
+    # ``status``/``capabilities`` keep working).
+    vision_backend_ready: bool = True
+    vision_backend_kind: str = "unknown"
+    vision_backend_error: str | None = None
+    scenarios_loaded: list[str] = []
 
 
 class Detection(BaseModel):

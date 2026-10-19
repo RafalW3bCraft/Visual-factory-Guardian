@@ -117,7 +117,7 @@ def test_sensors_rejects_wrong_line_id() -> None:
 def test_analysis_endpoint_includes_evidence_and_causes() -> None:
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        r = client.get("/api/v1/analysis/evt-004")
+        r = client.get("/api/v1/analysis/evt-004?scenario_id=thermal-drift-001")
         assert r.status_code == 200
         body = r.json()
         assert body["event_id"] == "evt-004"
@@ -162,7 +162,7 @@ def test_analysis_endpoint_includes_evidence_and_causes() -> None:
 def test_analysis_endpoint_unknown_event_404() -> None:
     with _client() as client:
         client.post("/api/v1/scenarios/start", json={"scenario_id": "thermal-drift-001"})
-        r = client.get("/api/v1/analysis/evt-999")
+        r = client.get("/api/v1/analysis/evt-999?scenario_id=thermal-drift-001")
         assert r.status_code == 404
 
 

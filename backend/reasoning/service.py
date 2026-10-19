@@ -8,9 +8,16 @@ Combines the statistical RootCauseEngine with the Explainer so integration code
     result_dict = service.analyse(event_dict, sensor_reading_dicts)
 
 Everything is JSON-in / JSON-dict-out, matching the repo's event contract.
+
+Environment:
+  VFG_KNOWLEDGE_PATH  optional override for the domain knowledge base file
+                      (default: ``data/knowledge/tile_kiln_knowledge.json``).
+  VFG_MANUAL_PATH     optional override for the maintenance manual file
+                      (default: ``data/manuals/tile_line_maintenance_manual.md``).
 """
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Optional
 
 from backend.root_cause.engine import RootCauseEngine
@@ -23,10 +30,26 @@ class ReasoningService:
         self,
         knowledge_path: Optional[str] = None,
         manual_path: Optional[str] = None,
-        prefer_llm: bool = True,
+        prefer_llm: Optional[bool] = None,
     ):
-        self.engine = RootCauseEngine(knowledge_path=knowledge_path)
-        self.explainer = Explainer(manual_path=manual_path)
+        # Read env at construction time so an operator can change the KB or
+        # manual without restarting the process — at the cost of requiring
+        # a process restart for the change to take effect, which is the
+        # only safe semantic for a deployed reasoning service.
+        self.knowledge_path = (
+            knowledge_path
+            if knowledge_path is not None
+            else os.environ.get("VFG_KNOWLEDGE_PATH")
+        )
+        self.manual_path = (
+            manual_path
+            if manual_path is not None
+            else os.environ.get("VFG_MANUAL_PATH")
+        )
+        self.engine = RootCauseEngine(knowledge_path=self.knowledge_path)
+        self.explainer = Explainer(manual_path=self.manual_path)
+        if prefer_llm is None:
+            prefer_llm = bool(os.environ.get("VFG_LLM_ENDPOINT", "").strip())
         self.prefer_llm = prefer_llm
 
     def analyse(

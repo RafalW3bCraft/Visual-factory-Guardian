@@ -6,11 +6,15 @@ schema matches the Zod validators 1:1.
 """
 from __future__ import annotations
 
+import logging
 import os
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..scenario.loader import list_scenarios
@@ -61,8 +65,6 @@ def _resolve_vision_backend() -> VisionBackend:
         backend.vision.fixtures``).
       * ``VFG_VISION_BACKEND=synthetic`` — deterministic fixture.
     """
-    import logging
-
     log = logging.getLogger("vfg.backend")
 
     from ..vision.amd_detect import summary as _amd_summary
@@ -166,46 +168,184 @@ def _resolve_vision_backend() -> VisionBackend:
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     registry = RuntimeRegistry()
+    backend: VisionBackend | None = None
+    backend_kind = "none"
+    backend_error: str | None = None
     try:
-        backend: VisionBackend = _resolve_vision_backend()
-    except RuntimeError:
-        # If backend setup fails we still start (so /health works) but
-        # /events will return a 503 with a clear error.
-        backend = None  # type: ignore[assignment]
+        backend = _resolve_vision_backend()
+        backend_kind = type(backend).__name__
+    except RuntimeError as exc:
+        # Make init failure loud so operators notice via /health AND in logs.
+        # The server still boots so /health can report the failure rather
+        # than silently 503-ing every other endpoint.
+        backend_error = str(exc)
+        logging.getLogger("vfg.backend").error(
+            "Vision backend init failed: %s", exc, exc_info=True
+        )
     app.state.registry = registry
     app.state.backend = backend
+    app.state.backend_kind = backend_kind
+    app.state.backend_error = backend_error
     app.state.scenarios = list_scenarios()
+    # Loud startup summary so an operator's first log line tells them
+    # whether the server is healthy and which scenarios are wired in.
+    scenarios_list = list(app.state.scenarios)
+    logging.getLogger("vfg.backend").info(
+        "Startup: backend=%s scenarios=%d ids=%s",
+        backend_kind,
+        len(scenarios_list),
+        scenarios_list,
+    )
     yield
+
+
+def _resolve_cors_origins() -> list[str]:
+    """Restrict CORS by default; allow operators to widen via env.
+
+    Production deployments should set ``VFG_CORS_ORIGINS`` to the exact
+    origin(s) of the operator dashboard, comma-separated. When unset we
+    allow only ``http://localhost:*`` (Vite dev / preview) and the
+    documented 4173 port. The default is intentionally narrow so a
+    production server cannot accidentally serve any browser origin.
+    """
+    raw = os.environ.get("VFG_CORS_ORIGINS")
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+    return [
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
+
+def _bearer_token_configured() -> str | None:
+    """Return the configured bearer token, or None if auth is disabled.
+
+    Auth is opt-in: when ``VFG_API_BEARER_TOKEN`` is unset, the API is open
+    (matches the prior dev workflow). When set, mutating endpoints and the
+    analysis endpoint require ``Authorization: Bearer <token>``. Read-only
+    endpoints (``/events``, ``/sensors``, ``/health``, ``/analysis/health``)
+    stay open so monitoring tools can poll them without a credential.
+    """
+    tok = os.environ.get("VFG_API_BEARER_TOKEN", "").strip()
+    return tok or None
+
+
+def require_bearer_if_configured(
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    """FastAPI dependency: enforces the bearer token when one is configured.
+
+    Back-compat: when no token is configured this dependency is a no-op so
+    existing dev/test setups keep working unchanged.
+    """
+    expected = _bearer_token_configured()
+    if expected is None:
+        return
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Missing Authorization: Bearer <token>",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    presented = authorization[7:].strip()
+    # Constant-time compare to avoid leaking token length via timing.
+    if not secrets.compare_digest(presented, expected):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Visual Factory Guardian", version="0.1.0", lifespan=_lifespan)
 
-    # Permissive CORS for local development. In production the
-    # deployment is responsible for restricting origins.
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["*"],
-        allow_credentials=False,
-    )
+    # Request-ID middleware: attach a stable correlation id to every request
+    # so logs from the handler, the LLM client, and any downstream service
+    # can be tied together. Respects an incoming ``X-Request-ID`` so a
+    # frontend or upstream proxy can propagate the id through the call.
+    @app.middleware("http")
+    async def _request_id_middleware(request: Request, call_next):
+        rid = request.headers.get("x-request-id") or secrets.token_hex(8)
+        request.state.request_id = rid
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = rid
+        return response
+
+    # CORS — narrow by default; widen via VFG_CORS_ORIGINS if needed.
+    # Set VFG_CORS_ALLOW_ALL=1 only for local development.
+    if os.environ.get("VFG_CORS_ALLOW_ALL") == "1":
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_methods=["GET", "POST", "OPTIONS"],
+            allow_headers=["*"],
+            allow_credentials=False,
+        )
+    else:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_resolve_cors_origins(),
+            allow_methods=["GET", "POST", "OPTIONS"],
+            allow_headers=["*"],
+            allow_credentials=False,
+        )
 
     # ------------------------------------------------------------------
     # Health
     # ------------------------------------------------------------------
 
     @app.get("/api/v1/health", response_model=HealthResponse)
-    def health() -> HealthResponse:
-        return HealthResponse(status="ok", capabilities=REQUIRED_CAPABILITIES)
+    def health(request: Request) -> HealthResponse:
+        backend: VisionBackend | None = request.app.state.backend
+        backend_kind: str = getattr(request.app.state, "backend_kind", "none")
+        backend_error: str | None = getattr(
+            request.app.state, "backend_error", None
+        )
+        scenarios_loaded: list[str] = list(
+            getattr(request.app.state, "scenarios", []) or []
+        )
+        # ``degraded`` when the server boots but a downstream dep is missing.
+        # ``unready`` is reserved for a future state where we cannot serve any
+        # request; for now, a missing vision backend still lets /events fail
+        # loudly with 503 rather than hanging.
+        if backend is None:
+            status: Literal["ok", "degraded", "unready"] = "degraded"
+            caps = [c for c in REQUIRED_CAPABILITIES if c != "events"]
+        else:
+            status = "ok"
+            caps = list(REQUIRED_CAPABILITIES)
+        return HealthResponse(
+            status=status,
+            capabilities=caps,
+            vision_backend_ready=backend is not None,
+            vision_backend_kind=backend_kind,
+            vision_backend_error=backend_error,
+            scenarios_loaded=scenarios_loaded,
+        )
 
     # ------------------------------------------------------------------
     # Scenarios
     # ------------------------------------------------------------------
 
+    @app.get(
+        "/api/v1/scenarios",
+        response_model=list[str],
+    )
+    def scenarios_list(request: Request) -> list[str]:
+        """List the scenario ids the server has loaded at startup.
+
+        Read-only; lets an operator verify which scenarios are wired in
+        after a redeploy without reading logs.
+        """
+        return list(getattr(request.app.state, "scenarios", []) or [])
+
     @app.post(
         "/api/v1/scenarios/start",
         response_model=ScenarioStartResponse,
+        dependencies=[Depends(require_bearer_if_configured)],
     )
     def scenarios_start(
         req: ScenarioStartRequest, request: Request
@@ -225,6 +365,7 @@ def create_app() -> FastAPI:
     @app.post(
         "/api/v1/scenarios/stop",
         response_model=ScenarioStopResponse,
+        dependencies=[Depends(require_bearer_if_configured)],
     )
     def scenarios_stop(
         req: ScenarioStopRequest, request: Request
@@ -309,8 +450,63 @@ def create_app() -> FastAPI:
     # Analysis
     # ------------------------------------------------------------------
 
-    @app.get("/api/v1/analysis/{event_id}", response_model=Analysis)
-    def analysis(event_id: str, request: Request) -> Analysis:
+    # Static reasoning-layer readiness probe MUST be declared before the
+    # /analysis/{event_id} catch-all or FastAPI will dispatch "health" as
+    # an event_id and return 404.
+    @app.get("/api/v1/analysis/health")
+    def analysis_health(request: Request) -> dict:
+        """Report whether the AMD-hosted LLM explainer is reachable.
+
+        Operators use this to verify .env credentials at deploy time
+        without running a full analysis. Returns ``llm_available=False`` if
+        the endpoint is unset / unreachable — the pipeline still works via
+        the deterministic fallback. Also reports vision-backend readiness so
+        operators see the full dependency picture in one call.
+        """
+        from backend.reasoning.service import ReasoningService
+
+        svc = ReasoningService()
+        backend: VisionBackend | None = request.app.state.backend
+        llm = svc.explainer.llm
+        return {
+            "status": "ok" if backend is not None else "degraded",
+            "llm_available": bool(llm.available),
+            "explainer_default": (
+                f"llm:{llm.config.model}" if llm.available else "deterministic"
+            ),
+            "llm_endpoint_configured": bool(llm.config.endpoint),
+            "llm_model": llm.config.model,
+            # Circuit-breaker observability — operators can see how the
+            # AMD endpoint has been behaving since process start.
+            "llm_failure_count": llm.failure_count,
+            "llm_circuit_open": llm.circuit_open,
+            "vision_backend_ready": backend is not None,
+            "vision_backend_kind": getattr(
+                request.app.state, "backend_kind", "none"
+            ),
+            "vision_backend_error": getattr(
+                request.app.state, "backend_error", None
+            ),
+        }
+
+    @app.get(
+        "/api/v1/analysis/{event_id}",
+        response_model=Analysis,
+        dependencies=[Depends(require_bearer_if_configured)],
+    )
+    async def analysis(
+        event_id: str,
+        request: Request,
+        scenario_id: Annotated[
+            str,
+            Query(
+                min_length=1,
+                description="Required: which scenario owns this event_id. "
+                "Removing the implicit cross-scenario scan eliminates a "
+                "hidden O(scenarios × inspections) lookup per request.",
+            ),
+        ],
+    ) -> Analysis:
         registry: RuntimeRegistry = request.app.state.registry
         backend: VisionBackend | None = request.app.state.backend
         if backend is None:
@@ -318,19 +514,16 @@ def create_app() -> FastAPI:
                 status_code=503,
                 detail="Vision backend not initialised. Check server logs.",
             )
-        # Find the scenario that owns this event
-        scenario_id = request.query_params.get("scenario_id")
-        if scenario_id is None:
-            for sid in request.app.state.scenarios:
-                try:
-                    rt = registry.get(sid)
-                except FileNotFoundError:
-                    continue
-                if any(i.event_id == event_id for i in rt.scenario.inspections):
-                    scenario_id = sid
-                    break
-        if scenario_id is None:
-            raise HTTPException(status_code=404, detail=f"Unknown event_id: {event_id}")
+        # Caller MUST supply scenario_id. Cross-scenario event_id scanning
+        # was a hidden O(N) lookup that also masked routing bugs.
+        if scenario_id not in request.app.state.scenarios:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Unknown scenario_id: {scenario_id}. Known: "
+                    f"{request.app.state.scenarios}"
+                ),
+            )
         try:
             runtime = registry.get(scenario_id)
         except FileNotFoundError as exc:
@@ -378,7 +571,8 @@ def create_app() -> FastAPI:
             },
         }
 
-        payload = build_analysis_payload(
+        payload = await run_in_threadpool(
+            build_analysis_payload,
             event_id=event_id,
             scenario_id=runtime.scenario.scenario_id,
             line_id=runtime.scenario.line_id,

@@ -70,8 +70,20 @@ def main() -> int:
                 None,
                 {"scenario_id": "thermal-drift-001", "line_id": "line-01"},
             ),
-            ("ANALYSIS evt-004 (anomalous)", "GET", "/api/v1/analysis/evt-004", None, None),
-            ("ANALYSIS evt-001 (normal)", "GET", "/api/v1/analysis/evt-001", None, None),
+            (
+                "ANALYSIS evt-004 (anomalous)",
+                "GET",
+                "/api/v1/analysis/evt-004",
+                None,
+                {"scenario_id": "thermal-drift-001"},
+            ),
+            (
+                "ANALYSIS evt-001 (normal)",
+                "GET",
+                "/api/v1/analysis/evt-001",
+                None,
+                {"scenario_id": "thermal-drift-001"},
+            ),
             (
                 "STOP",
                 "POST",
